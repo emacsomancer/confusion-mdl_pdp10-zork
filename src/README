@@ -21,6 +21,8 @@ The Zork sources, somewhat modified for the limitations of this
 interpreter, are available at 
 <http://www.russotto.net/~mrussotto/confusion/mdlzork.tgz> 
 
+[see also <https://github.com/itafroma/zork-mdl> ]
+
 To play Zork, unpack this directory, change directory to the new 
 "mdlzork" directory", run the interpreter with the parameter "-r 
 MDL/MADADV.SAVE" e.g. "../confusion-src/mdli -r MDL/MADADV.SAVE". 
@@ -50,3 +52,7 @@ Confusion probably won't be developed further.
 Notable features not supported: proper SAVE/RESTORE (an incompatible but
 useful version is provided), GC-DUMP/GC-READ,  interrupts, processes, 
 overflow, compiled code.
+
+------
+
+B. Slade: Minor updates to make it compile with recent versions of gcc
