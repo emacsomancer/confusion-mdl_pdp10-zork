@@ -16,6 +16,7 @@
 /*****************************************************************************/
 #include <gc/gc.h>
 #include <string.h>
+#include <unistd.h>
 #include "macros.hpp"
 #include "mdl_assoc.hpp"
 #include "mdl_internal_defs.h"

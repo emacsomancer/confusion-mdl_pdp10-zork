@@ -22,6 +22,8 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <unistd.h>
+#include <getopt.h>
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include "mdl_builtin_types.h"
@@ -608,7 +610,7 @@ bool mdl_oblists_are_reasonable(mdl_value_t *oblists)
 mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *default_oblists)
 {
 
-    char *trailer = strstr(pname, "!-");
+    char *trailer = const_cast<char*>(strstr(pname, "!-"));  
     if (trailer == NULL)
     {
         return mdl_get_atom_default_oblist(pname, insert_allowed, default_oblists);

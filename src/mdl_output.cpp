@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "mdl_strbuf.h"
 
 typedef enum outbuf_items_t
