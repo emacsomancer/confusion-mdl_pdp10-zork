@@ -24,6 +24,7 @@
 #include <map>
 #include <setjmp.h>
 #include <float.h>
+#include <stdint.h>
 #include "mdl_builtin_types.h"
 
 // PRIMTYPES and TYPES must be specified in order, with
