@@ -25,6 +25,7 @@
 #include <map>
 #include <ext/hash_set>
 #include <string.h>
+#include <stdio.h>
 
 using __gnu_cxx::hash_set;
 using __gnu_cxx::hash;
