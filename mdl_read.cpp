@@ -19,6 +19,7 @@
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
