@@ -2,12 +2,19 @@
 set -u
 umask 077
 
-prefix=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd) || exit 1
-mdli="$prefix/bin/mdli"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1
+prefix=$(CDPATH= cd -- "$script_dir/../.." && pwd) || exit 1
+
+if command -v mdli >/dev/null 2>&1; then
+    mdli=$(command -v mdli)
+else
+    mdli="$prefix/bin/mdli"
+fi
+
 share="$prefix/share/confusion-mdl"
 
 if [ "$#" -ne 3 ]; then
-    printf '%s\n' 'Usage: zork-mdl-run VERSION DATE TITLE' >&2
+    printf '%s\n' 'Usage: zork-mdli-run VERSION DATE TITLE' >&2
     exit 2
 fi
 
