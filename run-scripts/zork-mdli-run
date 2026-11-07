@@ -1,0 +1,122 @@
+#!/bin/sh
+set -u
+umask 077
+
+prefix=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd) || exit 1
+mdli="$prefix/bin/mdli"
+share="$prefix/share/confusion-mdl"
+
+if [ "$#" -ne 3 ]; then
+    printf '%s\n' 'Usage: zork-mdl-run VERSION DATE TITLE' >&2
+    exit 2
+fi
+
+version=$1
+game_date=$2
+title=$3
+
+# Open the user's default terminal when launched without one.
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
+        printf '%s\n' \
+            'No terminal is attached and xdg-terminal-exec is unavailable.' \
+            'Run this launcher from a terminal or install xdg-terminal-exec.' >&2
+        exit 1
+    fi
+
+    exec xdg-terminal-exec "--title=$title" -- \
+        "$0" "$version" "$game_date" "$title"
+fi
+
+case "$version" in
+    771212|780124)
+        save_file='SAVEFILE/ZORK.SAVE'
+        ;;
+    791211|810722)
+        save_file='MDL/MADADV.SAVE'
+        ;;
+    *)
+        printf 'Unknown Zork version: %s\n' "$version" >&2
+        exit 2
+        ;;
+esac
+
+source="$share/mdlzork_$version/patched_confusion"
+data="${XDG_DATA_HOME:-${HOME:?}/.local/share}/confusion-mdl"
+game="$data/$version"
+active_save="$game/$save_file"
+save_name=${save_file##*/}
+save_base=${save_name%.SAVE}
+save_dir="$game/saves"
+initial_dir="$save_dir/initial"
+history_dir="$save_dir/history"
+initial_save="$initial_dir/$save_name"
+
+if [ ! -x "$mdli" ]; then
+    printf 'Interpreter not found: %s\n' "$mdli" >&2
+    exit 1
+fi
+
+if [ ! -d "$source" ]; then
+    printf 'Game data missing: %s\n' "$source" >&2
+    exit 1
+fi
+
+mkdir -p "$game" || exit 1
+
+# Copy the packaged game into the user's writable directory once.
+if [ ! -f "$game/run.mud" ]; then
+    cp -R "$source/." "$game/" || {
+        printf '%s\n' 'Could not install game files.' >&2
+        exit 1
+    }
+fi
+
+mkdir -p "$initial_dir" "$history_dir" \
+    "$(dirname "$active_save")" || exit 1
+
+# Preserve the supplied initial save.
+if [ ! -f "$initial_save" ]; then
+    if [ ! -f "$active_save" ]; then
+        printf 'Supplied initial save is missing: %s\n' "$active_save" >&2
+        exit 1
+    fi
+
+    cp -p "$active_save" "$initial_save" || exit 1
+fi
+
+chmod a-w "$initial_save" || exit 1
+
+# Initialize the working save from the protected initial save.
+if [ ! -f "$active_save" ]; then
+    cp -p "$initial_save" "$active_save" || exit 1
+fi
+
+chmod u+w "$active_save" || exit 1
+
+cd "$game" || exit 1
+export CONFUSION_ZORK_DATE="$game_date"
+
+snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX") || exit 1
+trap 'rm -f "$snapshot"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+cp -p "$active_save" "$snapshot" || exit 1
+
+status=0
+"$mdli" -r "$save_file" || status=$?
+
+# Archive the previous save if the session changed the working save.
+if [ ! -f "$active_save" ] || ! cmp -s "$snapshot" "$active_save"; then
+    stamp=$(date '+%Y%m%d-%H%M%S')
+    archive="$history_dir/$save_base-$stamp-$$.SAVE"
+
+    mv "$snapshot" "$archive" || exit 1
+    printf 'Previous save archived: %s\n' "$archive"
+else
+    rm -f "$snapshot"
+fi
+
+exit "$status"
