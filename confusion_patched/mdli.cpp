@@ -1,6 +1,8 @@
 /*****************************************************************************/
 /*    'Confusion', a MDL intepreter                                         */
-/*    Copyright 2009 Matthew T. Russotto                                    */
+/*    Copyright 2009       Matthew T. Russotto                              */
+/*              2018, 2026 Benjamin Slade                                   */
+/*              2021-2024  Henrik Åsman                                     */
 /*                                                                          */
 /*    This program is free software: you can redistribute it and/or modify  */
 /*    it under the terms of the GNU General Public License as published by  */
@@ -31,7 +33,9 @@ using namespace std;
 
 const char copyright_notice[] = 
     "Welcome to 'Confusion', a MDL interpreter.\n"
-    "Copyright 2009 Matthew T. Russotto"
+    "Copyright 2009 Matthew T. Russotto\n"
+    "          2018, 2026 Benjamin Slade\n"                                   
+    "          2021-2024  Henrik Åsman\n"  
     "\nThis Confusion created " __DATE__ " @ " __TIME__
     "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
     "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
