@@ -1,8 +1,10 @@
-* reimplementation of MDL interpretor as Confusion plus PDP-10 game runners :ATTACH:
+* More reimplementation of the MDL interpreter *Confusion*, plus game runners :ATTACH:
 :PROPERTIES:
 :ID:       d549a986-56a2-458f-bb4d-1e443b6fe587
 :END:
-This is *Confusion*, [[https://web.archive.org/web/20170313024629/http://www.russotto.net/git/mrussotto/confusion/src/master/src][Matthew T. Russotto's C/C++ MDL interpreter]], the purpose being to be able to run Infocom's old game sources written in [[https://en.wikipedia.org/wiki/MDL_(programming_language)][MDL, MIT's Model Development Language]], a weird Lisp with ~<...>~ rather than ~(...)~, with an obvious play on /muddle/ (and thus /confusion/). Confusion implements just enough MDL to be able to most muddle along through [[https://en.wikipedia.org/wiki/Zork#Inception][old versions of the text adventure/interactiv fiction game Zork]].
+This is *Confusion*, [[https://web.archive.org/web/20170313024629/http://www.russotto.net/git/mrussotto/confusion/src/master/src][Matthew T. Russotto's C/C++ MDL interpreter]], the purpose being to be able to run [[https://en.wikipedia.org/wiki/Infocom][Infocom]]'s old game sources written in [[https://en.wikipedia.org/wiki/MDL_(programming_language)][MDL, MIT's Model Development Language]], a weird Lisp with ~<...>~ rather than ~(...)~, with an obvious play on /muddle/ (and thus Russotto's /confusion/).
+
+Confusion implements just enough MDL to be able to most muddle along through [[https://en.wikipedia.org/wiki/Zork#Inception][old versions of the text adventure/interactive fiction game Zork]].
 
 This version of *Confusion* include the [[https://gitlab.com/emacsomancer/confusion-mdl][patches I made to get it running under later versions of GCC back in 2018]], [[https://github.com/heasm66/mdlzork][Henrik Åsman's later (2021-2024) patches and patched games files in MDL and Fortran]], some minor cosmetic patches I made in 2026, and "runners" for the various games (see the =zork-run-scripts= directory).
 
@@ -10,7 +12,9 @@ This version of *Confusion* include the [[https://gitlab.com/emacsomancer/confus
 
 [[./IMGs/pdp10-zork-in-eshell-on-x200-in2018.png]]
 
-Historical notes continue below:
+On early versions of Zork, see also [[https://en.wikipedia.org/wiki/Andrew_Plotkin][Andrew Plotkin]]'s (=Zarf's) [[https://eblong.com/infocom/#zorkmdl][The Obsessively Complete Infocom Catalog]].
+
+Historical README notes continue below:
 
 * Mainframe Zork for Confusion [Henrik Åsman's patched update README info]
 :PROPERTIES:
