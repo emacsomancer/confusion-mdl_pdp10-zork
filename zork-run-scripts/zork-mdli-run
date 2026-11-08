@@ -2,25 +2,16 @@
 set -u
 umask 077
 
-runner=$(readlink -f -- "$0") || exit 1
-runner_dir=$(dirname -- "$runner")
-
-# Installed layout:
-#   PACKAGE/bin/mdli
-#   PACKAGE/libexec/confusion-mdl/zork-mdli-run
-#   PACKAGE/share/confusion-mdl/
+# Resolve the package root from:
+# PACKAGE/libexec/confusion-mdl/zork-mdli-run
+runner_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
 prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
+mdli="$prefix/bin/mdli"
 share="$prefix/share/confusion-mdl"
 
-# Prefer an interpreter supplied through PATH.
-mdli=$(command -v mdli 2>/dev/null || :)
-if [ -z "$mdli" ]; then
-    mdli="$prefix/bin/mdli"
-fi
-
 if [ "$#" -ne 3 ]; then
-    printf '%s\n' 'Usage: zork-mdli-run VERSION DATE TITLE' >&2
+    printf '%s\n' 'Usage: zork-mdl-run VERSION DATE TITLE' >&2
     exit 2
 fi
 
