@@ -5,15 +5,18 @@ umask 077
 runner=$(readlink -f -- "$0") || exit 1
 runner_dir=$(dirname -- "$runner")
 
+# Installed layout:
+#   PACKAGE/bin/mdli
+#   PACKAGE/libexec/confusion-mdl/zork-mdli-run
+#   PACKAGE/share/confusion-mdl/
 prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
-mdli="./mdli"
 share="$prefix/share/confusion-mdl"
 
-# Prefer an mdli supplied by PATH; otherwise use this package's mdli.
+# Prefer an interpreter supplied through PATH.
 mdli=$(command -v mdli 2>/dev/null || :)
 if [ -z "$mdli" ]; then
-    mdli="mdli"
+    mdli="$prefix/bin/mdli"
 fi
 
 if [ "$#" -ne 3 ]; then
@@ -63,7 +66,7 @@ history_dir="$save_dir/history"
 initial_save="$initial_dir/$save_name"
 
 if [ ! -x "$mdli" ]; then
-    printf 'Interpreter not found: %s\n' "$mdli" >&2
+    printf 'Interpreter not found or not executable: %s\n' "$mdli" >&2
     exit 1
 fi
 
