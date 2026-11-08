@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+umask 077
+
+runner_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
+prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
+
+source="$prefix/share/confusion-mdl/dungeon_3_2b"
+data="${XDG_DATA_HOME:-${HOME:?}/.local/share}/confusion-mdl"
+game="$data/dungeon_3_2b"
+
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
+        printf '%s\n' \
+            'No terminal is attached and xdg-terminal-exec is unavailable.' \
+            'Run Dungeon from a terminal or install xdg-terminal-exec.' >&2
+        exit 1
+    fi
+
+    exec xdg-terminal-exec --title='Dungeon 3.2b' -- "$0" "$@"
+fi
+
+if [ ! -x "$game/build/dungeon" ]; then
+    mkdir -p "$data" "$game"
+    cp -R "$source/." "$game/"
+fi
+
+exec "$game/dungeon.sh"

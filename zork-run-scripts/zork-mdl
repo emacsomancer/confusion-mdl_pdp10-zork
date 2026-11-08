@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+
+bin_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
+runner="$bin_dir/../libexec/confusion-mdl/zork-mdli-run"
+dungeon_runner="$bin_dir/../libexec/confusion-mdl/dungeon-3.2b-run"
+
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
+        printf '%s\n' \
+            'No terminal is attached and xdg-terminal-exec is unavailable.' \
+            'Run this launcher from a terminal or install xdg-terminal-exec.' >&2
+        exit 1
+    fi
+    exec xdg-terminal-exec --title='Zork and Dungeon' -- "$0"
+fi
+
+printf '%s\n' \
+    'Choose a game:' \
+    '1) Zork 1977-12-12 — 500 points; reconstructed, playable to 500' \
+    '2) Zork 1978-01-24 — parser improvements; incomplete end-game' \
+    '3) Zork 1979-12-11 — 616 points; near-complete end-game' \
+    '4) Zork 1981-07-22 — Bob Supnik sources; three bugfixes' \
+    '5) Dungeon 3.2b' \
+    'q) Quit'
+
+printf 'Selection [1-5, q]: '
+IFS= read -r choice || exit 0
+
+case "$choice" in
+    1) exec "$runner" 771212 'Dec 12 1977' 'Zork (1977-12-12)' ;;
+    2) exec "$runner" 780124 'Jan 24 1978' 'Zork (1978-01-24)' ;;
+    3) exec "$runner" 791211 'Dec 11 1979' 'Zork (1979-12-11)' ;;
+    4) exec "$runner" 810722 'Jul 22 1981' 'Zork (1981-07-22)' ;;
+    5) exec "$dungeon_runner" ;;
+    q|Q) exit 0 ;;
+    *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
+esac

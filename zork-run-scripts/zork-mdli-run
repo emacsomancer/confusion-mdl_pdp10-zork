@@ -5,7 +5,7 @@ umask 077
 # Resolve the package root from:
 # PACKAGE/libexec/confusion-mdl/zork-mdli-run
 runner_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
-prefix=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 1
+prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
 mdli="$prefix/bin/mdli"
 share="$prefix/share/confusion-mdl"
