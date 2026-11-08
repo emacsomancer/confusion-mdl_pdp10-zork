@@ -2,7 +2,9 @@
 #define _H_MDL_ASSOC
 /*****************************************************************************/
 /*    'Confusion', a MDL intepreter                                         */
-/*    Copyright 2009 Matthew T. Russotto                                    */
+/*    Copyright 2009       Matthew T. Russotto                              */
+/*              2018, 2026 Benjamin Slade                                   */
+/*              2021-2024  Henrik Åsman                                     */
 /*                                                                          */
 /*    This program is free software: you can redistribute it and/or modify  */
 /*    it under the terms of the GNU General Public License as published by  */
@@ -16,7 +18,6 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
-
 #include <gc/gc.h>
 
 typedef struct mdl_assoc_t

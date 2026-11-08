@@ -23,23 +23,35 @@
 #include "mdl_internal_defs.h"
 #include <set>
 #include <string>
+#include <cstdlib>
+#include <cstring>
+
 #ifdef _WIN32
 #include "mdl_win32.h"
 #else
 #include <unistd.h>
 #endif
 
+const std::string copyright_notice = [] {
+    const char *zork_date = std::getenv("CONFUSION_ZORK_DATE");
+
+    const std::string date =
+        std::strcmp(__DATE__, "Jan  1 1970") == 0 &&
+        zork_date && *zork_date
+            ? std::string(zork_date)
+            : std::string(__DATE__ " @ " __TIME__);
+
+    return
+        "Welcome to 'Confusion', a MDL interpreter.\n"
+        "Copyright 2009 Matthew T. Russotto\n"
+        "          2018, 2026 Benjamin Slade\n"
+        "          2021-2024  Henrik Åsman\n"
+        "\nThis Confusion created " + date +
+        "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
+        "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
+}();
+
 using namespace std;
-
-const char copyright_notice[] = 
-    "Welcome to 'Confusion', a MDL interpreter.\n"
-    "Copyright 2009 Matthew T. Russotto\n"
-    "          2018, 2026 Benjamin Slade\n"                                   
-    "          2021-2024  Henrik Åsman\n"  
-    "\nThis Confusion created " __DATE__ " @ " __TIME__
-    "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
-    "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
-
 extern const char no_warranty[] = "THERE IS NO WARRANTY FOR THIS PROGRAM, TO THE EXTENT PERMITTED BY\n"
 "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
  "HOLDERS AND/OR OTHER PARTIES PROVIDE THIS PROGRAM \"AS IS\" WITHOUT WARRANTY\n"

@@ -1,5 +1,7 @@
 #   'Confusion', a MDL intepreter
-#   Copyright 2009 Matthew T. Russotto
+#   Copyright 2009       Matthew T. Russotto
+#             2018, 2026 Benjamin Slade
+#             2021-2024  Henrik Åsman
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
