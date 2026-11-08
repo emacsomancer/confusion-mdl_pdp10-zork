@@ -8,7 +8,7 @@ This version of *Confusion* include the [[https://gitlab.com/emacsomancer/confus
 
 [more info to follow]
 
-.[IMGs/pdp10-zork-in-eshell-on-x200-in2018.png]
+[[./IMGs/pdp10-zork-in-eshell-on-x200-in2018.png]]
 
 Historical notes continue below:
 
