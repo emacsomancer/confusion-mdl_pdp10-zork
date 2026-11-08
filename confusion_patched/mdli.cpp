@@ -41,7 +41,7 @@ const std::string copyright_notice = [] {
         "          2018, 2026 Benjamin Slade\n"
         "          2021-2024  Henrik Åsman\n"
         "\nThis Confusion created 2026.\n"
-        "This Zork created " +
+        "This Zork code revision dated " +
         std::string(zork_date && *zork_date ? zork_date : "unknown") +
         ".\n"
         "This program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
