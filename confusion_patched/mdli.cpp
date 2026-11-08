@@ -86,6 +86,6 @@ int main(int argc, char *argv[])
     }
         
 //    mdl_rep_loop();
-    puts(copyright_notice);
+    puts(copyright_notice.c_str());
     mdl_toplevel(restorefile);
 }
