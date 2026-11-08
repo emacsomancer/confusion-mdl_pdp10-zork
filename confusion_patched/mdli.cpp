@@ -37,7 +37,7 @@ const std::string copyright_notice = [] {
 
     const std::string date =
         std::strcmp(__DATE__, "Jan  1 1970") == 0 &&
-        zork_date && *zork_date
+        zork_date != nullptr && *zork_date != '\0'
             ? std::string(zork_date)
             : std::string(__DATE__ " @ " __TIME__);
 
