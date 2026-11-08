@@ -2,18 +2,18 @@
 set -u
 umask 077
 
-runner_dir=$(dirname -- "$0")
+runner=$(readlink -f -- "$0") || exit 1
+runner_dir=$(dirname -- "$runner")
 
-# Resolve the installed package root:
-# libexec/confusion-mdl/../../ = package root
-prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd) || exit 1
+prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
+mdli="./mdli"
 share="$prefix/share/confusion-mdl"
 
 # Prefer an mdli supplied by PATH; otherwise use this package's mdli.
 mdli=$(command -v mdli 2>/dev/null || :)
 if [ -z "$mdli" ]; then
-    mdli="$prefix/bin/mdli"
+    mdli="mdli"
 fi
 
 if [ "$#" -ne 3 ]; then
