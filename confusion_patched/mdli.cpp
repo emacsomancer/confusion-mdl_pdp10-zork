@@ -46,7 +46,7 @@ const std::string copyright_notice = [] {
         "Copyright 2009 Matthew T. Russotto\n"
         "          2018, 2026 Benjamin Slade\n"
         "          2021-2024  Henrik Åsman\n"
-        "\nThis Confusion created " + date +
+        "\nThis Confusion created 2006." 
         "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
         "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
 }();
