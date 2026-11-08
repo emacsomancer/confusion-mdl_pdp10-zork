@@ -35,19 +35,16 @@
 const std::string copyright_notice = [] {
     const char *zork_date = std::getenv("CONFUSION_ZORK_DATE");
 
-    const std::string date =
-        std::strcmp(__DATE__, "Jan  1 1970") == 0 &&
-        zork_date != nullptr && *zork_date != '\0'
-            ? std::string(zork_date)
-            : std::string(__DATE__ " @ " __TIME__);
-
     return
         "Welcome to 'Confusion', a MDL interpreter.\n"
         "Copyright 2009 Matthew T. Russotto\n"
         "          2018, 2026 Benjamin Slade\n"
         "          2021-2024  Henrik Åsman\n"
-        "\nThis Confusion created 2006." 
-        "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
+        "\nThis Confusion created 2026.\n"
+        "This Zork created " +
+        std::string(zork_date && *zork_date ? zork_date : "unknown") +
+        ".\n"
+        "This program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
         "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
 }();
 
@@ -86,6 +83,6 @@ int main(int argc, char *argv[])
     }
         
 //    mdl_rep_loop();
-    puts(copyright_notice.c_str());
+    qputs(copyright_notice.c_str());
     mdl_toplevel(restorefile);
 }
