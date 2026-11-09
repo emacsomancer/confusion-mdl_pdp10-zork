@@ -1,3 +1,4 @@
+
 #!/bin/sh
 set -eu
 
@@ -28,11 +29,26 @@ printf 'Selection [1-5, q]: '
 IFS= read -r choice || exit 0
 
 case "$choice" in
-    1) exec "$runner" 771212 'Dec 12 1977' 'Zork (1977-12-12)' ;;
-    2) exec "$runner" 780124 'Jan 24 1978' 'Zork (1978-01-24)' ;;
-    3) exec "$runner" 791211 'Dec 11 1979' 'Zork (1979-12-11)' ;;
-    4) exec "$runner" 810722 'Jul 22 1981' 'Zork (1981-07-22)' ;;
+    1) version=771212; game_date='Dec 12 1977'; title='Zork (1977-12-12)' ;;
+    2) version=780124; game_date='Jan 24 1978'; title='Zork (1978-01-24)' ;;
+    3) version=791211; game_date='Dec 11 1979'; title='Zork (1979-12-11)' ;;
+    4) version=810722; game_date='Jul 22 1981'; title='Zork (1981-07-22)' ;;
     5) exec "$dungeon_runner" ;;
+    q|Q) exit 0 ;;
+    *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
+esac
+
+printf '\n%s\n' "$title" \
+    '1) Continue' \
+    '2) Start a new game' \
+    'q) Back to quit'
+
+printf 'Selection [1-2, q]: '
+IFS= read -r action || exit 0
+
+case "$action" in
+    1) exec "$runner" "$version" "$game_date" "$title" ;;
+    2) exec "$runner" "$version" "$game_date" "$title" --new-game ;;
     q|Q) exit 0 ;;
     *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
 esac
