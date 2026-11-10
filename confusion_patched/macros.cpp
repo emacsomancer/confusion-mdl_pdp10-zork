@@ -8459,6 +8459,7 @@ mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *arg
     ARGSETUP(args);
     mdl_value_t *programarg, *argvarg, *inputarg;
     std::string program;
+
     GETNEXTREQARG(programarg, args);
     GETNEXTREQARG(argvarg, args);
     GETNEXTARG(inputarg, args);
@@ -8468,12 +8469,15 @@ mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *arg
         return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
     if (argvarg->type != MDL_TYPE_VECTOR)
         return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
-    if (inputarg && inputarg->type != MDL_TYPE_STRING)
+    if (inputarg &&
+        (inputarg->type != MDL_TYPE_STRING ||
+         memchr(inputarg->v.s.p, '\0', inputarg->v.s.l) != NULL))
         return mdl_call_error("THIRD-ARG-WRONG-TYPE", NULL);
 
 #ifndef _WIN32
     std::vector<std::string> storage;
     storage.push_back(program);
+
     mdl_value_t *argv = VREST(argvarg, 0);
     for (int i = 0; i < VLENGTH(argvarg); ++i) {
         if (argv[i].type != MDL_TYPE_STRING ||
@@ -8481,46 +8485,129 @@ mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *arg
             return mdl_call_error("EXECUTE-ARGUMENT-MUST-BE-STRING", NULL);
         storage.push_back(std::string(argv[i].v.s.p, argv[i].v.s.l));
     }
+
     std::vector<char *> cargv;
-    for (std::vector<std::string>::iterator i = storage.begin(); i != storage.end(); ++i)
+    for (std::vector<std::string>::iterator i = storage.begin();
+         i != storage.end(); ++i)
         cargv.push_back(const_cast<char *>(i->c_str()));
     cargv.push_back(NULL);
-    int pipefd[2];
-    if (pipe(pipefd) != 0) return mdl_gnusto_errno_result(errno);
-    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1) {
-        int err = errno; close(pipefd[0]); close(pipefd[1]);
-        return mdl_gnusto_errno_result(err);
-    }
-    pid_t pid = fork();
-    if (pid == -1) {
-        int err = errno; close(pipefd[0]); close(pipefd[1]);
-        return mdl_gnusto_errno_result(err);
-    }
-    if (pid == 0) {
-        close(pipefd[0]);
-        execvp(program.c_str(), &cargv[0]);
+
+    int exec_pipe[2];
+    int stdin_pipe[2] = {-1, -1};
+
+    if (pipe(exec_pipe) != 0)
+        return mdl_gnusto_errno_result(errno);
+
+    if (fcntl(exec_pipe[1], F_SETFD, FD_CLOEXEC) == -1) {
         int err = errno;
-        (void)write(pipefd[1], &err, sizeof(err));
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
+        return mdl_gnusto_errno_result(err);
+    }
+
+    if (inputarg && pipe(stdin_pipe) != 0) {
+        int err = errno;
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
+        return mdl_gnusto_errno_result(err);
+    }
+
+    pid_t pid = fork();
+
+    if (pid == -1) {
+        int err = errno;
+        close(exec_pipe[0]);
+        close(exec_pipe[1]);
+        if (stdin_pipe[0] != -1) {
+            close(stdin_pipe[0]);
+            close(stdin_pipe[1]);
+        }
+        return mdl_gnusto_errno_result(err);
+    }
+
+    if (pid == 0) {
+        close(exec_pipe[0]);
+
+        if (inputarg) {
+            close(stdin_pipe[1]);
+            if (dup2(stdin_pipe[0], STDIN_FILENO) == -1) {
+                int err = errno;
+                (void)write(exec_pipe[1], &err, sizeof(err));
+                _exit(127);
+            }
+            close(stdin_pipe[0]);
+        }
+
+        execvp(program.c_str(), &cargv[0]);
+
+        int err = errno;
+        (void)write(exec_pipe[1], &err, sizeof(err));
         _exit(127);
     }
-    close(pipefd[1]);
+
+    close(exec_pipe[1]);
+
+    if (inputarg)
+        close(stdin_pipe[0]);
+
     int exec_error = 0;
     ssize_t got;
-    do { got = read(pipefd[0], &exec_error, sizeof(exec_error)); }
-    while (got == -1 && errno == EINTR);
+
+    do {
+        got = read(exec_pipe[0], &exec_error, sizeof(exec_error));
+    } while (got == -1 && errno == EINTR);
+
     int pipe_error = (got == -1) ? errno : 0;
-    close(pipefd[0]);
+    close(exec_pipe[0]);
+
+    int input_error = 0;
+
+    if (inputarg && got == 0 && !pipe_error) {
+        size_t offset = 0;
+        size_t length = inputarg->v.s.l;
+
+        while (offset < length) {
+            ssize_t written = write(
+                stdin_pipe[1],
+                inputarg->v.s.p + offset,
+                length - offset);
+
+            if (written == -1) {
+                if (errno == EINTR)
+                    continue;
+                input_error = errno;
+                break;
+            }
+
+            offset += written;
+        }
+    }
+
+    if (inputarg)
+        close(stdin_pipe[1]);
+
     int status;
     while (waitpid(pid, &status, 0) == -1) {
-        if (errno == EINTR) continue;
+        if (errno == EINTR)
+            continue;
         return mdl_gnusto_errno_result(errno);
     }
-    if (pipe_error) return mdl_gnusto_errno_result(pipe_error);
-    if (got > 0) return mdl_gnusto_errno_result(exec_error);
-    if (WIFEXITED(status)) return mdl_new_fix(WEXITSTATUS(status));
-    if (WIFSIGNALED(status)) return mdl_new_fix(128 + WTERMSIG(status));
+
+    if (pipe_error)
+        return mdl_gnusto_errno_result(pipe_error);
+    if (got > 0)
+        return mdl_gnusto_errno_result(exec_error);
+    if (input_error)
+        return mdl_gnusto_errno_result(input_error);
+
+    if (WIFEXITED(status))
+        return mdl_new_fix(WEXITSTATUS(status));
+    if (WIFSIGNALED(status))
+        return mdl_new_fix(128 + WTERMSIG(status));
+
     return mdl_new_fix(1);
 #else
     return mdl_call_error("GNUSTO-EXECUTE-UNSUPPORTED", NULL);
 #endif
 }
+
