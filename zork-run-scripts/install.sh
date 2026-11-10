@@ -11,6 +11,10 @@ doc="$out/share/doc/confusion-mdl-zork"
 
 mkdir -p "$bin" "$libexec" "$share" "$doc"
 
+# Expect is used by the 1979 and 1981 Continue launchers.
+test -x "$expect_prefix/bin/expect"
+ln -s "$expect_prefix/bin/expect" "$libexec/expect"
+
 # Confusion interpreter.
 install -m755 confusion_patched/mdli "$bin/mdli"
 
