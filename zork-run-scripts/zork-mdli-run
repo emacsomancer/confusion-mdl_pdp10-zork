@@ -1,4 +1,3 @@
-
 #!/bin/sh
 set -eu
 umask 077
@@ -44,7 +43,7 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
 fi
 
 # The first two versions use complete Confusion interpreter images.
-# The later versions use MADADV.SAVE to boot and a separate game save.
+# The later versions boot MADADV.SAVE and use a separate game save.
 case "$version" in
     771212|780124)
         seed_file='SAVEFILE/ZORK.SAVE'
@@ -114,6 +113,7 @@ chmod u+rwx \
     "$initial_dir" \
     "$current_dir" \
     "$history_dir" \
+    "$(dirname "$seed_save")" \
     "$(dirname "$active_save")"
 
 # Preserve the original interpreter image.
@@ -136,13 +136,13 @@ if [ "$seed_save" != "$active_save" ] && [ -f "$seed_save" ]; then
 fi
 
 # Migrate an existing regular save or an old save symlink.
-# -f follows symlinks, so an existing save is preserved.
+# Never overwrite an existing managed current save.
 if [ ! -f "$current_save" ] && [ -f "$active_save" ]; then
     cp -p "$active_save" "$current_save" || exit 1
 fi
 
-# Only interpreter-image versions get initialized from the seed.
-# The 1979/1981 game save must remain absent until the game creates it.
+# Only interpreter-image versions are initialized from the seed.
+# The 1979/1981 game save remains absent until the game creates it.
 if [ "$save_mode" = interpreter ] && [ ! -f "$current_save" ]; then
     cp "$initial_save" "$current_save" || exit 1
 fi
@@ -222,25 +222,53 @@ fi
 cd "$game"
 export CONFUSION_ZORK_DATE="$game_date"
 
-# Snapshot an existing save before the session.
+# Snapshot the current save before starting the session.
 snapshot=''
 
-cleanup()
-{
-    if [ -n "$snapshot" ]; then
-        rm -f "$snapshot"
+if [ -f "$current_save" ]; then
+    temporary_snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX") || exit 1
+
+    if cp -p "$current_save" "$temporary_snapshot"; then
+        snapshot=$temporary_snapshot
+    else
+        rm -f "$temporary_snapshot"
+        exit 1
     fi
+fi
+
+# Archive the pre-session save if the game changes it.
+# This also runs when the user exits with Ctrl-C or a termination signal.
+finish()
+{
+    result=$?
+    trap - 0
+
+    if [ -n "$snapshot" ]; then
+        if [ ! -f "$current_save" ] ||
+           ! cmp -s "$snapshot" "$current_save"; then
+            stamp=$(date '+%Y%m%d-%H%M%S')
+            archive="$history_dir/$save_base-$stamp-$$.SAVE"
+
+            if mv "$snapshot" "$archive"; then
+                snapshot=''
+                printf 'Previous save archived: %s\n' "$archive"
+            else
+                printf 'Could not archive previous save: %s\n' \
+                    "$snapshot" >&2
+            fi
+        else
+            rm -f "$snapshot"
+            snapshot=''
+        fi
+    fi
+
+    exit "$result"
 }
 
-trap cleanup 0
+trap finish 0
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
-
-if [ -f "$current_save" ]; then
-    snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX") || exit 1
-    cp -p "$current_save" "$snapshot" || exit 1
-fi
 
 status=0
 
@@ -255,16 +283,16 @@ if [ "$save_mode" = game ] &&
         exit 1
     fi
 
-    if "$expect" -c '
+    if MDLI="$mdli" BOOT_FILE="$boot_file" \
+       "$expect" -c '
         set timeout 60
+        set restored 0
 
-        set mdli [lindex $argv 0]
-        set image [lindex $argv 1]
+        spawn -noecho $env(MDLI) -r $env(BOOT_FILE)
 
-        spawn -noecho $mdli -r $image
-
+        # Wait for the initial game prompt.
         expect {
-            -re {> $} {}
+            -re {> ?$} {}
             timeout {
                 send_user "\nTimed out waiting for the Zork prompt.\n"
                 catch {close}
@@ -277,15 +305,28 @@ if [ "$save_mode" = game ] &&
             }
         }
 
+        # The 1979/1981 games register RESTORE as a game command.
         send -- "restore\r"
 
+        # Require an actual restore response and the next game prompt.
         expect {
-            -re {Restored\.} {}
-            -re {Restore failed\.} {
-                send_user "\nZork could not restore its game save.\n"
+            -re {(?i)(restore.*(fail|error)|cannot restore|can.t restore)} {
+                send_user "\nZork reported a restore failure.\n"
                 catch {close}
                 catch {wait}
                 exit 1
+            }
+            -re {Restored\.|Restoring\.} {
+                set restored 1
+                exp_continue
+            }
+            -re {> ?$} {
+                if {!$restored} {
+                    send_user "\nZork returned to the prompt without confirming a restore.\n"
+                    catch {close}
+                    catch {wait}
+                    exit 1
+                }
             }
             timeout {
                 send_user "\nTimed out waiting for Zork to restore its save.\n"
@@ -299,14 +340,13 @@ if [ "$save_mode" = game ] &&
             }
         }
 
+        # Leave the restored game under the users control.
         set timeout -1
-        expect -re {> $}
-
         interact
 
         set result [wait]
         exit [lindex $result 3]
-    ' "$mdli" "$boot_file"; then
+    '; then
         status=0
     else
         status=$?
@@ -315,22 +355,6 @@ else
     # 1977/1978: restore the complete interpreter image.
     # 1979/1981 New Game or first launch: boot the original image.
     "$mdli" -r "$boot_file" || status=$?
-fi
-
-# Archive the previous save if the session changed it.
-if [ -n "$snapshot" ]; then
-    if [ ! -f "$current_save" ] ||
-       ! cmp -s "$snapshot" "$current_save"; then
-        stamp=$(date '+%Y%m%d-%H%M%S')
-        archive="$history_dir/$save_base-$stamp-$$.SAVE"
-
-        mv "$snapshot" "$archive" || exit 1
-        snapshot=''
-        printf 'Previous save archived: %s\n' "$archive"
-    else
-        rm -f "$snapshot"
-        snapshot=''
-    fi
 fi
 
 exit "$status"
