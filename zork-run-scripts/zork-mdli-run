@@ -38,7 +38,7 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
         exit 1
     fi
 
-    exec xdg-terminal-exec "--title=$title" -- "$0" "$@"
+    exec xdg-terminal-exec "--title=$title" -- sh "$0" "$@"
 fi
 
 case "$version" in

@@ -1,4 +1,3 @@
-
 #!/bin/sh
 set -eu
 
@@ -13,7 +12,9 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
             'Run this launcher from a terminal or install xdg-terminal-exec.' >&2
         exit 1
     fi
-    exec xdg-terminal-exec --title='Zork and Dungeon' -- "$0"
+    exec xdg-terminal-exec \
+        --title='Zork (Dungeon), PDP-10 MDL editions, 1977-1981' \
+        -- "$0"
 fi
 
 printf '%s\n' \
@@ -33,7 +34,7 @@ case "$choice" in
     2) version=780124; game_date='Jan 24 1978'; title='Zork (1978-01-24)' ;;
     3) version=791211; game_date='Dec 11 1979'; title='Zork (1979-12-11)' ;;
     4) version=810722; game_date='Jul 22 1981'; title='Zork (1981-07-22)' ;;
-    5) exec "$dungeon_runner" ;;
+    5) exec sh "$dungeon_runner" ;;
     q|Q) exit 0 ;;
     *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
 esac
@@ -47,8 +48,8 @@ printf 'Selection [1-2, q]: '
 IFS= read -r action || exit 0
 
 case "$action" in
-    1) exec "$runner" "$version" "$game_date" "$title" ;;
-    2) exec "$runner" "$version" "$game_date" "$title" --new-game ;;
+    1) exec sh "$runner" "$version" "$game_date" "$title" ;;
+    2) exec sh "$runner" "$version" "$game_date" "$title" --new-game ;;
     q|Q) exit 0 ;;
     *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
 esac

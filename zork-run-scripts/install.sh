@@ -48,9 +48,9 @@ done
 install -m755 zork-run-scripts/zork-mdl "$bin/zork-mdl"
 install -m644 zork-run-scripts/zork-version "$bin/zork-version"
 
-for year in 1977 1978 1979 1981; do
-    ln -s zork-version "$bin/zork-$year"
-done
+# for year in 1977 1978 1979 1981; do
+#     ln -s zork-version "$bin/zork-$year"
+# done
 
 # Interpreter license.
 install -m644 confusion_patched/COPYING "$doc/COPYING"
