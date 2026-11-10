@@ -6753,12 +6753,13 @@ mdl_value_t *mdl_builtin_eval_file_existsp(mdl_value_t *form, mdl_value_t *args)
     struct stat stbuf;
 
     while (cursor && nargs < 4)
-    {
+      {
         argt[nargs] = cursor->v.p.car;
         if (argt[nargs]->type != MDL_TYPE_STRING)
-            mdl_error("All args to FILE-EXISTS must be string");
+          mdl_error("All args to FILE-EXISTS must be string");
         cursor = cursor->v.p.cdr;
-    }
+        nargs++;
+      }
     if (cursor)
         mdl_error("Too many args to FILE-EXISTS");
     mdl_decode_file_args(&argt[0], &argt[1], &argt[2], &argt[3]);
