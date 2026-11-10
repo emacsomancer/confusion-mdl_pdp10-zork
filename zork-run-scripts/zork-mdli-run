@@ -30,6 +30,12 @@ if [ "$#" -eq 4 ]; then
     new_game=yes
 fi
 
+# The 1977 image has no reliable save/restore support.
+# Always start it from the original interpreter image.
+if [ "$version" = 771212 ]; then
+    new_game=yes
+fi
+
 # Open the user's default terminal when launched without one.
 if [ ! -t 0 ] || [ ! -t 1 ]; then
     if ! command -v xdg-terminal-exec >/dev/null 2>&1; then

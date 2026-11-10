@@ -6,18 +6,18 @@ runner="$bin_dir/../libexec/confusion-mdl/zork-mdli-run"
 dungeon_runner="$bin_dir/../libexec/confusion-mdl/dungeon-3.2b-run"
 
 if [ ! -t 0 ] || [ ! -t 1 ]; then
-    if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
-        printf '%s\n' \
-            'No terminal is attached and xdg-terminal-exec is unavailable.' \
-            'Run this launcher from a terminal or install xdg-terminal-exec.' >&2
-        exit 1
+  if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
+    printf '%s\n' \
+    'No terminal is attached and xdg-terminal-exec is unavailable.' \
+    'Run this launcher from a terminal or install xdg-terminal-exec.' >&2
+    exit 1
     fi
     exec xdg-terminal-exec \
-        --title='Zork (Dungeon), PDP-10 MDL editions, 1977-1981' \
-        -- "$0"
-fi
+    --title='Zork (Dungeon), PDP-10 MDL editions, 1977-1981' \
+    -- "$0"
+    fi
 
-printf '%s\n' \
+    printf '%s\n' \
     'Choose a game:' \
     '1) Zork 1977-12-12 — 500 points; reconstructed, playable to 500' \
     '2) Zork 1978-01-24 — parser improvements; incomplete end-game' \
@@ -26,10 +26,10 @@ printf '%s\n' \
     '5) Dungeon 3.2b' \
     'q) Quit'
 
-printf 'Selection [1-5, q]: '
-IFS= read -r choice || exit 0
+    printf 'Selection [1-5, q]: '
+    IFS= read -r choice || exit 0
 
-case "$choice" in
+    case "$choice" in
     1) version=771212; game_date='Dec 12 1977'; title='Zork (1977-12-12)' ;;
     2) version=780124; game_date='Jan 24 1978'; title='Zork (1978-01-24)' ;;
     3) version=791211; game_date='Dec 11 1979'; title='Zork (1979-12-11)' ;;
@@ -37,19 +37,35 @@ case "$choice" in
     5) exec sh "$dungeon_runner" ;;
     q|Q) exit 0 ;;
     *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
-esac
+    esac
 
-printf '\n%s\n' "$title" \
-    '1) Continue' \
-    '2) Start a new game' \
-    'q) Back to quit'
+    if [ "$version" = 771212 ]; then
+      printf '\n%s\n' "$title" \
+      '1) New Game' \
+      'q) Quit'
 
-printf 'Selection [1-2, q]: '
-IFS= read -r action || exit 0
+      printf 'Selection [1, q]: '
+      IFS= read -r action || exit 0
 
-case "$action" in
-    1) exec sh "$runner" "$version" "$game_date" "$title" ;;
-    2) exec sh "$runner" "$version" "$game_date" "$title" --new-game ;;
-    q|Q) exit 0 ;;
-    *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
-esac
+      case "$action" in
+      1) exec sh "$runner" "$version" "$game_date" "$title" --new-game ;;
+      q|Q) exit 0 ;;
+      *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
+      esac
+    else
+      printf '\n%s\n' "$title" \
+      '1) Continue' \
+      '2) Start a new game' \
+      'q) Quit'
+
+      printf 'Selection [1-2, q]: '
+      IFS= read -r action || exit 0
+
+      case "$action" in
+      1) exec sh "$runner" "$version" "$game_date" "$title" ;;
+      2) exec sh "$runner" "$version" "$game_date" "$title" --new-game ;;
+      q|Q) exit 0 ;;
+      *) printf '%s\n' 'Invalid selection.' >&2; exit 1 ;;
+      esac
+fi
+      
