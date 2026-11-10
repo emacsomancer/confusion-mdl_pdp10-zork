@@ -48,7 +48,7 @@ case "$version" in
         ;;
     791211|810722)
         seed_file='MDL/MADADV.SAVE'
-        active_file='MDL/MADADV.SAVE'
+        active_file='MTRZORK/ZORK.SAVE'
         ;;
     *)
         printf 'Unknown Zork version: %s\n' "$version" >&2
@@ -133,10 +133,12 @@ if [ ! -f "$current_save" ]; then
     fi
 fi
 
-chmod u+rw "$current_save" || exit 1
+# The game writes its save under MTRZORK.
+chmod u+rwx "$(dirname "$active_save")" || exit 1
 
 # Point the game's expected save path at the writable working save.
-if [ ! -L "$active_save" ]; then
+if [ ! -L "$active_save" ] ||
+   [ "$(readlink "$active_save")" != "$link_target" ]; then
     rm -f "$active_save" || exit 1
     ln -s "$link_target" "$active_save" || exit 1
 fi
