@@ -1,3 +1,4 @@
+
 #!/bin/sh
 set -eu
 umask 077
@@ -12,7 +13,7 @@ share="$prefix/share/confusion-mdl"
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
     printf '%s\n' \
-        'Usage: zork-mdl-run VERSION DATE TITLE [--new-game]' >&2
+        'Usage: zork-mdli-run VERSION DATE TITLE [--new-game]' >&2
     exit 2
 fi
 
@@ -41,14 +42,18 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
     exec xdg-terminal-exec "--title=$title" -- sh "$0" "$@"
 fi
 
+# The early versions use an interpreter save image as their save slot.
+# The later versions boot from MADADV.SAVE and use a separate game save.
 case "$version" in
     771212|780124)
-        restore_file='SAVEFILE/ZORK.SAVE'
+        seed_file='SAVEFILE/ZORK.SAVE'
         active_file='MTRZORK/ZORK.SAVE'
+        save_mode='interpreter'
         ;;
     791211|810722)
-        restore_file='MDL/MADADV.SAVE'
+        seed_file='MDL/MADADV.SAVE'
         active_file='MTRZORK/ZORK.SAVE'
+        save_mode='game'
         ;;
     *)
         printf 'Unknown Zork version: %s\n' "$version" >&2
@@ -63,6 +68,7 @@ game="$data/$version"
 seed_save="$game/$seed_file"
 active_save="$game/$active_file"
 
+seed_name=${seed_file##*/}
 save_name=${active_file##*/}
 save_base=${save_name%.SAVE}
 
@@ -71,7 +77,8 @@ initial_dir="$save_dir/initial"
 current_dir="$save_dir/current"
 history_dir="$save_dir/history"
 
-initial_save="$initial_dir/$save_name"
+# Keep the initial interpreter image under its actual filename.
+initial_save="$initial_dir/$seed_name"
 current_save="$current_dir/$save_name"
 link_target="../saves/current/$save_name"
 
@@ -85,7 +92,7 @@ if [ ! -d "$source" ]; then
     exit 1
 fi
 
-mkdir -p "$game" || exit 1
+mkdir -p "$game"
 
 # Copy the packaged game into the user's writable directory once.
 if [ ! -f "$game/run.mud" ]; then
@@ -95,96 +102,146 @@ if [ ! -f "$game/run.mud" ]; then
     }
 fi
 
-mkdir -p "$initial_dir" "$current_dir" "$history_dir" \
+mkdir -p \
+    "$initial_dir" \
+    "$current_dir" \
+    "$history_dir" \
     "$(dirname "$seed_save")" \
-    "$(dirname "$active_save")" || exit 1
+    "$(dirname "$active_save")"
 
-# The copied game tree may inherit read-only directory permissions.
-# The interpreter needs to create, replace, and remove save files.
-chmod u+rwx "$(dirname "$active_save")" || exit 1
+# The game must be able to create and update its save file.
+chmod u+rwx "$(dirname "$active_save")"
 
-# Preserve the original seed independently of the working save.
+# Preserve the original interpreter image.
+# Never substitute a game-level save for this image.
 if [ ! -f "$initial_save" ]; then
-    if [ -f "$seed_save" ]; then
-        cp -p "$seed_save" "$initial_save" || exit 1
-    elif [ -f "$active_save" ] && [ ! -L "$active_save" ]; then
-        # Recover an existing save if the original seed is unavailable.
-        cp -p "$active_save" "$initial_save" || exit 1
-    else
-        printf 'Initial save is missing: %s\n' "$seed_save" >&2
+    if [ ! -f "$seed_save" ]; then
+        printf 'Initial interpreter image is missing: %s\n' \
+            "$seed_save" >&2
         exit 1
     fi
+
+    cp -p "$seed_save" "$initial_save"
 fi
 
-chmod a-w "$initial_save" || exit 1
+chmod a-w "$initial_save"
 
-# Keep the packaged seed read-only when it has a separate path.
-if [ "$seed_save" != "$active_save" ] && [ -f "$seed_save" ]; then
-    chmod a-w "$seed_save" || exit 1
+# Migrate an existing regular save from the old layout before replacing
+# the game-facing path with the managed symlink.
+if [ ! -f "$current_save" ] &&
+   [ -f "$active_save" ] &&
+   [ ! -L "$active_save" ]; then
+    cp -p "$active_save" "$current_save"
 fi
 
-# Initialize the working save.
-# -f follows symlinks, preserving an existing save during migration.
-if [ ! -f "$current_save" ]; then
-    if [ -f "$active_save" ]; then
-        cp "$active_save" "$current_save" || exit 1
+# Initialize interpreter-image saves from the initial image.
+# Game-level saves must remain absent until the game creates one.
+if [ "$save_mode" = interpreter ] && [ ! -f "$current_save" ]; then
+    cp "$initial_save" "$current_save"
+    chmod u+rw "$current_save"
+fi
+
+# Install the managed save link.
+if [ -L "$active_save" ]; then
+    existing_target=$(readlink "$active_save")
+    if [ "$existing_target" != "$link_target" ]; then
+        rm "$active_save"
+        ln -s "$link_target" "$active_save"
+    fi
+elif [ -e "$active_save" ]; then
+    # A regular file was migrated above if necessary.
+    rm "$active_save"
+    ln -s "$link_target" "$active_save"
+else
+    ln -s "$link_target" "$active_save"
+fi
+
+# New Game:
+# - interpreter-save versions: restore the original interpreter image.
+# - game-save versions: remove the runtime save so the game starts fresh.
+if [ "$new_game" = yes ]; then
+    if [ -f "$current_save" ]; then
+        stamp=$(date '+%Y%m%d-%H%M%S')
+        archive="$history_dir/$save_base-new-game-$stamp-$$.SAVE"
+
+        cp -p "$current_save" "$archive"
+        printf 'Previous save archived: %s\n' "$archive"
+    fi
+
+    if [ "$save_mode" = interpreter ]; then
+        temporary="$current_dir/.$save_name.new-$$"
+        trap 'rm -f "$temporary"' 0 HUP INT TERM
+
+        cp "$initial_save" "$temporary"
+        chmod u+rw "$temporary"
+        mv -f "$temporary" "$current_save"
+
+        trap - 0 HUP INT TERM
     else
-        cp "$initial_save" "$current_save" || exit 1
+        rm -f "$current_save"
     fi
 fi
 
-# The game writes its save under MTRZORK.
-chmod u+rwx "$(dirname "$active_save")" || exit 1
-
-# Point the game's expected save path at the writable working save.
-if [ ! -L "$active_save" ] ||
-   [ "$(readlink "$active_save")" != "$link_target" ]; then
-    rm -f "$active_save" || exit 1
-    ln -s "$link_target" "$active_save" || exit 1
+# Continue on early versions requires the current interpreter image.
+if [ "$save_mode" = interpreter ] && [ ! -f "$current_save" ]; then
+    cp "$initial_save" "$current_save"
+    chmod u+rw "$current_save"
 fi
 
-# Start a new game by archiving the current save and restoring the seed.
-if [ "$new_game" = yes ]; then
-    stamp=$(date '+%Y%m%d-%H%M%S')
-    archive="$history_dir/$save_base-new-game-$stamp-$$.SAVE"
-
-    cp -p "$current_save" "$archive" || exit 1
-
-    temporary="$current_dir/.$save_name.new-$$"
-    trap 'rm -f "$temporary"' EXIT HUP INT TERM
-
-    cp "$initial_save" "$temporary" || exit 1
-    chmod u+rw "$temporary" || exit 1
-    mv -f "$temporary" "$current_save" || exit 1
-
-    trap - EXIT HUP INT TERM
-    printf 'Previous save archived: %s\n' "$archive"
-fi
-
-cd "$game" || exit 1
+cd "$game"
 export CONFUSION_ZORK_DATE="$game_date"
 
-# Snapshot the working save before the session.
-snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX") || exit 1
-trap 'rm -f "$snapshot"' EXIT
+# For 1979/1981, the interpreter boots from MADADV.SAVE.
+# Continue then requires the game's own RESTORE command.
+if [ "$save_mode" = game ] && [ "$new_game" = no ]; then
+    if [ -f "$current_save" ]; then
+        printf '\n%s\n' \
+            'After the game starts, restore your saved progress with:' \
+            '<RESTORE "ZORK.SAVE">'
+    else
+        printf '\n%s\n' \
+            'No game save exists yet; starting a new game.'
+    fi
+fi
+
+# Snapshot an existing runtime save before the session.
+snapshot=''
+if [ -f "$current_save" ]; then
+    snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX")
+    cp -p "$current_save" "$snapshot"
+fi
+
+cleanup()
+{
+    if [ -n "$snapshot" ]; then
+        rm -f "$snapshot"
+    fi
+}
+
+trap cleanup 0
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-cp -p "$current_save" "$snapshot" || exit 1
-
+# Start the appropriate interpreter image.
 status=0
-"$mdli" -r "$restore_file" || status=$?
 
-# Archive the previous save if the session changed the working save.
-if [ ! -f "$current_save" ] || ! cmp -s "$snapshot" "$current_save"; then
-    stamp=$(date '+%Y%m%d-%H%M%S')
-    archive="$history_dir/$save_base-$stamp-$$.SAVE"
-
-    mv "$snapshot" "$archive" || exit 1
-    printf 'Previous save archived: %s\n' "$archive"
+if [ "$save_mode" = interpreter ]; then
+    "$mdli" -r "$active_file" || status=$?
 else
-    rm -f "$snapshot"
+    "$mdli" -r "$seed_file" || status=$?
+fi
+
+# Archive the previous save if the session changed or removed it.
+if [ -n "$snapshot" ]; then
+    if [ ! -f "$current_save" ] || ! cmp -s "$snapshot" "$current_save"; then
+        stamp=$(date '+%Y%m%d-%H%M%S')
+        archive="$history_dir/$save_base-$stamp-$$.SAVE"
+
+        mv "$snapshot" "$archive"
+        snapshot=''
+        printf 'Previous save archived: %s\n' "$archive"
+    fi
 fi
 
 exit "$status"
