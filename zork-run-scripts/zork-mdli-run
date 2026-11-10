@@ -99,6 +99,10 @@ mkdir -p "$initial_dir" "$current_dir" "$history_dir" \
     "$(dirname "$seed_save")" \
     "$(dirname "$active_save")" || exit 1
 
+# The copied game tree may inherit read-only directory permissions.
+# The interpreter needs to create, replace, and remove save files.
+chmod u+rwx "$(dirname "$active_save")" || exit 1
+
 # Preserve the original seed independently of the working save.
 if [ ! -f "$initial_save" ]; then
     if [ -f "$seed_save" ]; then
