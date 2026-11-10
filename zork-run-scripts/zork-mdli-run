@@ -1,3 +1,4 @@
+
 #!/bin/sh
 set -eu
 umask 077
@@ -8,6 +9,7 @@ runner_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
 prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
 mdli="$prefix/bin/mdli"
+expect="$runner_dir/expect"
 share="$prefix/share/confusion-mdl"
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
@@ -90,10 +92,10 @@ if [ ! -d "$source" ]; then
     exit 1
 fi
 
+# Copy the packaged game into the user's writable directory once.
 mkdir -p "$game"
 chmod u+rwx "$game"
 
-# Copy the packaged game into the user's writable directory once.
 if [ ! -f "$game/run.mud" ]; then
     cp -R "$source/." "$game/" || {
         printf '%s\n' 'Could not install game files.' >&2
@@ -222,6 +224,7 @@ export CONFUSION_ZORK_DATE="$game_date"
 
 # Snapshot an existing save before the session.
 snapshot=''
+
 cleanup()
 {
     if [ -n "$snapshot" ]; then
@@ -246,16 +249,13 @@ if [ "$save_mode" = game ] &&
    [ -f "$current_save" ]; then
 
     # Confusion -r restores the interpreter image, not the game state.
-    # Boot MADADV.SAVE, then invoke the actual Zork DO-RESTORE routine
-    # automatically through the game's registered "restore" command.
-    if ! command -v expect >/dev/null 2>&1; then
-        printf '%s\n' \
-            'Continuing this game requires expect.' \
-            'Add expect to the package inputs.' >&2
+    # Boot MADADV.SAVE, then invoke the game's registered restore command.
+    if [ ! -x "$expect" ]; then
+        printf 'Expect executable missing: %s\n' "$expect" >&2
         exit 1
     fi
 
-    if expect -c '
+    if "$expect" -c '
         set timeout 60
 
         set mdli [lindex $argv 0]
@@ -312,8 +312,8 @@ if [ "$save_mode" = game ] &&
         status=$?
     fi
 else
-    # 1977/1978: the active file is the complete interpreter save image.
-    # 1979/1981 New Game or first launch: boot the original MADADV image.
+    # 1977/1978: restore the complete interpreter image.
+    # 1979/1981 New Game or first launch: boot the original image.
     "$mdli" -r "$boot_file" || status=$?
 fi
 

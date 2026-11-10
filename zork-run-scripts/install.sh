@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-out=${1:?Usage: install.sh OUTPUT}
+out=${1:?Usage: install.sh OUTPUT EXPECT-PREFIX}
+expect_prefix=${2:?Usage: install.sh OUTPUT EXPECT-PREFIX}
 
 bin="$out/bin"
 libexec="$out/libexec/confusion-mdl"

@@ -1,14 +1,19 @@
+
 #!/bin/sh
 set -eu
 umask 077
 
+# Resolve the package root from:
+# PACKAGE/libexec/confusion-mdl/dungeon-3.2b-run
 runner_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
 prefix=$(CDPATH= cd -- "$runner_dir/../.." && pwd -P) || exit 1
 
 source="$prefix/share/confusion-mdl/dungeon_3_2b"
 data="${XDG_DATA_HOME:-${HOME:?}/.local/share}/confusion-mdl"
 game="$data/dungeon_3_2b"
+build="$game/build"
 
+# Open the user's default terminal when launched without one.
 if [ ! -t 0 ] || [ ! -t 1 ]; then
     if ! command -v xdg-terminal-exec >/dev/null 2>&1; then
         printf '%s\n' \
@@ -17,12 +22,137 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
         exit 1
     fi
 
-    exec xdg-terminal-exec --title='Dungeon 3.2b' -- "$0" "$@"
+    exec xdg-terminal-exec --title='Dungeon 3.2b' -- sh "$0" "$@"
 fi
 
-if [ ! -x "$game/build/dungeon" ]; then
-    mkdir -p "$data" "$game"
-    cp -R "$source/." "$game/"
+if [ ! -d "$source" ]; then
+    printf 'Dungeon data missing: %s\n' "$source" >&2
+    exit 1
 fi
 
-exec "$game/dungeon.sh"
+# Copy the packaged game into the user's writable directory once.
+mkdir -p "$game"
+chmod u+rwx "$game"
+
+if [ ! -x "$build/dungeon" ]; then
+    cp -R "$source/." "$game/" || {
+        printf '%s\n' 'Could not install Dungeon files.' >&2
+        exit 1
+    }
+fi
+
+if [ ! -x "$build/dungeon" ]; then
+    printf 'Dungeon executable missing: %s/dungeon\n' "$build" >&2
+    exit 1
+fi
+
+if [ ! -f "$build/dindx" ] || [ ! -f "$build/dtext" ]; then
+    printf '%s\n' 'Dungeon data files are missing from build/.' >&2
+    exit 1
+fi
+
+save_dir="$game/saves"
+current_dir="$save_dir/current"
+history_dir="$save_dir/history"
+
+current_save="$current_dir/DSAVE.DAT"
+active_save="$build/DSAVE.DAT"
+link_target="../saves/current/DSAVE.DAT"
+
+mkdir -p "$current_dir" "$history_dir"
+
+# The build directory may have inherited read-only permissions
+# from the Guix store. It must be writable to create the save link.
+chmod u+rwx "$build" "$current_dir" "$history_dir"
+
+archive_old_save()
+{
+    file=$1
+    stamp=$(date '+%Y%m%d-%H%M%S')
+    archive="$history_dir/DSAVE-$stamp-$$.DAT"
+    cp -p "$file" "$archive" || exit 1
+    printf 'Previous Dungeon save archived: %s\n' "$archive"
+}
+
+# Migrate any pre-existing save in build/ into the managed save slot.
+if [ -L "$active_save" ]; then
+    old_target=$(readlink "$active_save")
+
+    if [ "$old_target" != "$link_target" ]; then
+        if [ -f "$active_save" ]; then
+            if [ ! -f "$current_save" ]; then
+                cp -p "$active_save" "$current_save" || exit 1
+            elif ! cmp -s "$active_save" "$current_save"; then
+                archive_old_save "$active_save"
+            fi
+        fi
+
+        rm -f "$active_save"
+    fi
+elif [ -f "$active_save" ]; then
+    if [ ! -f "$current_save" ]; then
+        mv "$active_save" "$current_save" || exit 1
+    elif ! cmp -s "$active_save" "$current_save"; then
+        archive_old_save "$active_save"
+        rm -f "$active_save"
+    else
+        rm -f "$active_save"
+    fi
+elif [ -e "$active_save" ]; then
+    printf 'Unexpected save path: %s\n' "$active_save" >&2
+    exit 1
+fi
+
+# Point the Fortran program's default DSAVE.DAT at the managed save.
+if [ ! -L "$active_save" ]; then
+    ln -s "$link_target" "$active_save"
+fi
+
+if [ -f "$current_save" ]; then
+    chmod u+rw "$current_save"
+fi
+
+# Snapshot an existing save before the session.
+snapshot=''
+cleanup()
+{
+    if [ -n "$snapshot" ]; then
+        rm -f "$snapshot"
+    fi
+}
+
+trap cleanup 0
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if [ -f "$current_save" ]; then
+    snapshot=$(mktemp "$history_dir/.snapshot.XXXXXX") || exit 1
+    cp -p "$current_save" "$snapshot" || exit 1
+fi
+
+# dungeon.sh changes into build/ before executing the Fortran game.
+status=0
+if sh "$game/dungeon.sh"; then
+    status=0
+else
+    status=$?
+fi
+
+# Archive the old save if the game changed or removed it.
+if [ -n "$snapshot" ]; then
+    if [ ! -f "$current_save" ] ||
+       ! cmp -s "$snapshot" "$current_save"; then
+        stamp=$(date '+%Y%m%d-%H%M%S')
+        archive="$history_dir/DSAVE-$stamp-$$.DAT"
+
+        mv "$snapshot" "$archive" || exit 1
+        snapshot=''
+        printf 'Previous Dungeon save archived: %s\n' "$archive"
+    else
+        rm -f "$snapshot"
+        snapshot=''
+    fi
+fi
+
+exit "$status"
