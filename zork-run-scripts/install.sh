@@ -14,18 +14,18 @@ mkdir -p "$bin" "$libexec" "$share" "$doc"
 install -m755 confusion_patched/mdli "$bin/mdli"
 
 # MDL runner.
-install -m755 zork-run-scripts/zork-mdli-run \
+install -m644 zork-run-scripts/zork-mdli-run \
     "$libexec/zork-mdli-run"
 
 # Dungeon runner.
-install -m755 zork-run-scripts/dungeon-3.2b-run \
+install -m644 zork-run-scripts/dungeon-3.2b-run \
     "$libexec/dungeon-3.2b-run"
 
 # Dungeon executable, source, documentation, and data.
 cp -R dungeon_3_2b "$share/"
 
 # Install the self-locating Dungeon launcher.
-install -m755 zork-run-scripts/dungeon.sh \
+install -m644 zork-run-scripts/dungeon.sh \
     "$share/dungeon_3_2b/dungeon.sh"
 
 # Playable MDL game trees.
@@ -46,7 +46,7 @@ done
 
 # Interactive selector and direct version launchers.
 install -m755 zork-run-scripts/zork-mdl "$bin/zork-mdl"
-install -m755 zork-run-scripts/zork-version "$bin/zork-version"
+install -m644 zork-run-scripts/zork-version "$bin/zork-version"
 
 for year in 1977 1978 1979 1981; do
     ln -s zork-version "$bin/zork-$year"

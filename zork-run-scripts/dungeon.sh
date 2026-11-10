@@ -14,4 +14,5 @@ if [ -t 1 ] && [ -n "${TERM:-}" ] &&
 fi
 
 cd "$game_dir/build"
-exec ./dungeon
+# exec ./dungeon
+exec sh ./dungeon
