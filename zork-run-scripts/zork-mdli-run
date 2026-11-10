@@ -43,11 +43,11 @@ fi
 
 case "$version" in
     771212|780124)
-        seed_file='SAVEFILE/ZORK.SAVE'
+        restore_file='SAVEFILE/ZORK.SAVE'
         active_file='MTRZORK/ZORK.SAVE'
         ;;
     791211|810722)
-        seed_file='MDL/MADADV.SAVE'
+        restore_file='MDL/MADADV.SAVE'
         active_file='MTRZORK/ZORK.SAVE'
         ;;
     *)
@@ -174,7 +174,7 @@ trap 'exit 143' TERM
 cp -p "$current_save" "$snapshot" || exit 1
 
 status=0
-"$mdli" -r "$active_file" || status=$?
+"$mdli" -r "$restore_file" || status=$?
 
 # Archive the previous save if the session changed the working save.
 if [ ! -f "$current_save" ] || ! cmp -s "$snapshot" "$current_save"; then
