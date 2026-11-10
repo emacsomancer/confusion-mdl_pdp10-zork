@@ -18,6 +18,15 @@
 /*****************************************************************************/
 #include <sys/stat.h>
 #ifndef _WIN32
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
+#include <algorithm>
+#include <string>
+#include <vector>
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
@@ -8177,4 +8186,335 @@ mdl_value_t *mdl_builtin_eval_copying(mdl_value_t *form, mdl_value_t *args)
     mdl_print_string_to_chan(chan, copying, strlen(copying), 0, false, false);
     mdl_print_newline_to_chan(chan, false, NULL);
     return mdl_value_T;
+}
+
+
+// GNUSTO extensions: host operating-system access not present in historical MDL.
+// These use ordinary POSIX pathnames rather than MDL device/name decoding.
+
+static mdl_value_t *mdl_gnusto_errno_result(int err)
+{
+    mdl_value_t *details = NULL;
+    details = mdl_cons_internal(mdl_new_fix(err), details);
+    details = mdl_cons_internal(mdl_new_string(strerror(err)), details);
+    return mdl_make_list(details, MDL_TYPE_FALSE);
+}
+
+static bool mdl_gnusto_path(mdl_value_t *arg, std::string &path)
+{
+    if (!arg || arg->type != MDL_TYPE_STRING)
+        return false;
+    if (memchr(arg->v.s.p, '\0', arg->v.s.l) != NULL)
+        return false;
+    path.assign(arg->v.s.p, arg->v.s.l);
+    return true;
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_getenv(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-GETENV */
+{
+    ARGSETUP(args);
+    mdl_value_t *name;
+    GETNEXTREQARG(name, args);
+    NOMOREARGS(args);
+    if (name->type != MDL_TYPE_STRING ||
+        memchr(name->v.s.p, '\0', name->v.s.l) != NULL)
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    std::string key(name->v.s.p, name->v.s.l);
+    const char *value = getenv(key.c_str());
+    return value ? mdl_new_string(value) : &mdl_value_false;
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_getcwd(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-GETCWD */
+{
+    DENYARG(0, args);
+#ifndef _WIN32
+    std::vector<char> buffer(256);
+    while (!getcwd(&buffer[0], buffer.size())) {
+        if (errno != ERANGE) return mdl_gnusto_errno_result(errno);
+        if (buffer.size() > (size_t)-1 / 2) return mdl_gnusto_errno_result(ENOMEM);
+        buffer.resize(buffer.size() * 2);
+    }
+    return mdl_new_string(&buffer[0]);
+#else
+    return mdl_call_error("GNUSTO-GETCWD-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_chdir(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-CHDIR */
+{
+    ARGSETUP(args);
+    mdl_value_t *arg;
+    std::string path;
+    GETNEXTREQARG(arg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(arg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    if (chdir(path.c_str()) == 0) return mdl_value_T;
+    return mdl_gnusto_errno_result(errno);
+#else
+    return mdl_call_error("GNUSTO-CHDIR-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_mkdir(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-MKDIR */
+{
+    ARGSETUP(args);
+    mdl_value_t *arg, *modearg;
+    std::string path;
+    unsigned int mode = 0777;
+    GETNEXTREQARG(arg, args);
+    GETNEXTARG(modearg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(arg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    if (modearg) {
+        if (modearg->type != MDL_TYPE_FIX || modearg->v.w < 0 || modearg->v.w > 07777)
+            return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+        mode = (unsigned int)modearg->v.w;
+    }
+#ifndef _WIN32
+    if (mkdir(path.c_str(), mode) == 0) return mdl_value_T;
+    return mdl_gnusto_errno_result(errno);
+#else
+    return mdl_call_error("GNUSTO-MKDIR-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_makedirs(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-MAKEDIRS */
+{
+    ARGSETUP(args);
+    mdl_value_t *arg, *modearg;
+    std::string path;
+    unsigned int mode = 0777;
+    GETNEXTREQARG(arg, args);
+    GETNEXTARG(modearg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(arg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    if (modearg) {
+        if (modearg->type != MDL_TYPE_FIX || modearg->v.w < 0 || modearg->v.w > 07777)
+            return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+        mode = (unsigned int)modearg->v.w;
+    }
+#ifndef _WIN32
+    if (path.empty()) return mdl_gnusto_errno_result(ENOENT);
+    std::string current;
+    size_t pos = 0;
+    if (path[0] == '/') current = "/";
+    while (pos < path.size()) {
+        while (pos < path.size() && path[pos] == '/') ++pos;
+        size_t end = path.find('/', pos);
+        if (end == std::string::npos) end = path.size();
+        if (end == pos) break;
+        if (!current.empty() && current[current.size()-1] != '/') current += '/';
+        current.append(path, pos, end - pos);
+        if (mkdir(current.c_str(), mode) != 0) {
+            if (errno != EEXIST) return mdl_gnusto_errno_result(errno);
+            struct stat st;
+            if (stat(current.c_str(), &st) != 0) return mdl_gnusto_errno_result(errno);
+            if (!S_ISDIR(st.st_mode)) return mdl_gnusto_errno_result(ENOTDIR);
+        }
+        pos = end;
+    }
+    return mdl_value_T;
+#else
+    return mdl_call_error("GNUSTO-MAKEDIRS-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_unlink(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-UNLINK */
+{
+    ARGSETUP(args);
+    mdl_value_t *arg;
+    std::string path;
+    GETNEXTREQARG(arg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(arg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    if (unlink(path.c_str()) == 0) return mdl_value_T;
+    return mdl_gnusto_errno_result(errno);
+#else
+    return mdl_call_error("GNUSTO-UNLINK-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_symlink(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-SYMLINK */
+{
+    ARGSETUP(args);
+    mdl_value_t *targetarg, *linkarg;
+    std::string target, linkpath;
+    GETNEXTREQARG(targetarg, args);
+    GETNEXTREQARG(linkarg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(targetarg, target) || !mdl_gnusto_path(linkarg, linkpath))
+        return mdl_call_error("ARGUMENT-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    if (symlink(target.c_str(), linkpath.c_str()) == 0) return mdl_value_T;
+    return mdl_gnusto_errno_result(errno);
+#else
+    return mdl_call_error("GNUSTO-SYMLINK-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_chmod(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-CHMOD */
+{
+    ARGSETUP(args);
+    mdl_value_t *patharg, *modearg;
+    std::string path;
+    GETNEXTREQARG(patharg, args);
+    GETNEXTREQARG(modearg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(patharg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    if (modearg->type != MDL_TYPE_FIX || modearg->v.w < 0 || modearg->v.w > 07777)
+        return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    if (chmod(path.c_str(), (mode_t)modearg->v.w) == 0) return mdl_value_T;
+    return mdl_gnusto_errno_result(errno);
+#else
+    return mdl_call_error("GNUSTO-CHMOD-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_stat(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-STAT */
+{
+    ARGSETUP(args);
+    mdl_value_t *patharg;
+    std::string path;
+    GETNEXTREQARG(patharg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(patharg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0) return mdl_gnusto_errno_result(errno);
+    // VECTOR slots: mode, size, uid, gid, atime, mtime, ctime, dev, ino, nlink.
+    mdl_value_t *result = mdl_new_empty_vector(10, MDL_TYPE_VECTOR);
+    mdl_value_t *v = VREST(result, 0);
+    v[0] = *mdl_new_fix((MDL_INT)st.st_mode);
+    v[1] = *mdl_new_fix((MDL_INT)st.st_size);
+    v[2] = *mdl_new_fix((MDL_INT)st.st_uid);
+    v[3] = *mdl_new_fix((MDL_INT)st.st_gid);
+    v[4] = *mdl_new_fix((MDL_INT)st.st_atime);
+    v[5] = *mdl_new_fix((MDL_INT)st.st_mtime);
+    v[6] = *mdl_new_fix((MDL_INT)st.st_ctime);
+    v[7] = *mdl_new_fix((MDL_INT)st.st_dev);
+    v[8] = *mdl_new_fix((MDL_INT)st.st_ino);
+    v[9] = *mdl_new_fix((MDL_INT)st.st_nlink);
+    return result;
+#else
+    return mdl_call_error("GNUSTO-STAT-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_directory_list(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-DIRECTORY-LIST */
+{
+    ARGSETUP(args);
+    mdl_value_t *patharg;
+    std::string path;
+    GETNEXTREQARG(patharg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(patharg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    DIR *dir = opendir(path.c_str());
+    if (!dir) return mdl_gnusto_errno_result(errno);
+    std::vector<std::string> names;
+    struct dirent *entry;
+    errno = 0;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
+            names.push_back(entry->d_name);
+    }
+    int read_error = errno;
+    closedir(dir);
+    if (read_error) return mdl_gnusto_errno_result(read_error);
+    std::sort(names.begin(), names.end());
+    mdl_value_t *list = NULL;
+    for (std::vector<std::string>::const_iterator i = names.begin(); i != names.end(); ++i)
+        list = mdl_cons_internal(mdl_new_string(i->c_str()), list);
+    // Reverse the prepended list to retain ascending order.
+    mdl_value_t *reversed = NULL;
+    while (list) {
+        mdl_value_t *next = list->v.p.cdr;
+        list->v.p.cdr = reversed;
+        reversed = list;
+        list = next;
+    }
+    return mdl_make_list(reversed, MDL_TYPE_LIST);
+#else
+    return mdl_call_error("GNUSTO-DIRECTORY-LIST-UNSUPPORTED", NULL);
+#endif
+}
+
+mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *args)
+/* SUBR GNUSTO-EXECUTE */
+{
+    ARGSETUP(args);
+    mdl_value_t *programarg, *argvarg;
+    std::string program;
+    GETNEXTREQARG(programarg, args);
+    GETNEXTREQARG(argvarg, args);
+    NOMOREARGS(args);
+    if (!mdl_gnusto_path(programarg, program) || program.empty())
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    if (argvarg->type != MDL_TYPE_VECTOR)
+        return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+#ifndef _WIN32
+    std::vector<std::string> storage;
+    storage.push_back(program);
+    mdl_value_t *argv = VREST(argvarg, 0);
+    for (int i = 0; i < VLENGTH(argvarg); ++i) {
+        if (argv[i].type != MDL_TYPE_STRING ||
+            memchr(argv[i].v.s.p, '\0', argv[i].v.s.l) != NULL)
+            return mdl_call_error("EXECUTE-ARGUMENT-MUST-BE-STRING", NULL);
+        storage.push_back(std::string(argv[i].v.s.p, argv[i].v.s.l));
+    }
+    std::vector<char *> cargv;
+    for (std::vector<std::string>::iterator i = storage.begin(); i != storage.end(); ++i)
+        cargv.push_back(const_cast<char *>(i->c_str()));
+    cargv.push_back(NULL);
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return mdl_gnusto_errno_result(errno);
+    if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1) {
+        int err = errno; close(pipefd[0]); close(pipefd[1]);
+        return mdl_gnusto_errno_result(err);
+    }
+    pid_t pid = fork();
+    if (pid == -1) {
+        int err = errno; close(pipefd[0]); close(pipefd[1]);
+        return mdl_gnusto_errno_result(err);
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        execvp(program.c_str(), &cargv[0]);
+        int err = errno;
+        (void)write(pipefd[1], &err, sizeof(err));
+        _exit(127);
+    }
+    close(pipefd[1]);
+    int exec_error = 0;
+    ssize_t got;
+    do { got = read(pipefd[0], &exec_error, sizeof(exec_error)); }
+    while (got == -1 && errno == EINTR);
+    int pipe_error = (got == -1) ? errno : 0;
+    close(pipefd[0]);
+    int status;
+    while (waitpid(pid, &status, 0) == -1) {
+        if (errno == EINTR) continue;
+        return mdl_gnusto_errno_result(errno);
+    }
+    if (pipe_error) return mdl_gnusto_errno_result(pipe_error);
+    if (got > 0) return mdl_gnusto_errno_result(exec_error);
+    if (WIFEXITED(status)) return mdl_new_fix(WEXITSTATUS(status));
+    if (WIFSIGNALED(status)) return mdl_new_fix(128 + WTERMSIG(status));
+    return mdl_new_fix(1);
+#else
+    return mdl_call_error("GNUSTO-EXECUTE-UNSUPPORTED", NULL);
+#endif
 }

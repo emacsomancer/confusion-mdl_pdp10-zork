@@ -35,6 +35,10 @@ OBJS = $(CXXSRCS:.cpp=.o) $(CSRCS:.c=.o)
 mdli: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
+# These headers are generated from macros.cpp/macros.hpp; build them before
+# compiling any object that includes the interpreter declarations.
+$(OBJS): mdl_builtins.h mdl_builtin_types.h
+
 copying.c: COPYING
 	awk 'BEGIN { print "const char copying [] = " } /END OF TERMS AND CONDITIONS/ { nextfile } { gsub("\"", "\\\"", $$0); print "\"" $$0 "\\n\""  } END { print ";" }'  < COPYING > copying.c
 
