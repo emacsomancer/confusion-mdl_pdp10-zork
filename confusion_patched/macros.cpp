@@ -8457,15 +8457,20 @@ mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *arg
 /* SUBR GNUSTO-EXECUTE */
 {
     ARGSETUP(args);
-    mdl_value_t *programarg, *argvarg;
+    mdl_value_t *programarg, *argvarg, *inputarg;
     std::string program;
     GETNEXTREQARG(programarg, args);
     GETNEXTREQARG(argvarg, args);
+    GETNEXTARG(inputarg, args);
     NOMOREARGS(args);
+
     if (!mdl_gnusto_path(programarg, program) || program.empty())
         return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
     if (argvarg->type != MDL_TYPE_VECTOR)
         return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+    if (inputarg && inputarg->type != MDL_TYPE_STRING)
+        return mdl_call_error("THIRD-ARG-WRONG-TYPE", NULL);
+
 #ifndef _WIN32
     std::vector<std::string> storage;
     storage.push_back(program);
