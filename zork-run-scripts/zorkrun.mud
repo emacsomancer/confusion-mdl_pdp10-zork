@@ -29,9 +29,9 @@
 <DEFINE ZORK-RUN-COPY-TREE (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
     <GNUSTO-EXECUTE "cp"
-      <VECTOR "-a" "--" <STRING .SOURCE "/."> .DESTINATION>>
-    "cp -a">>
-
+      <VECTOR "-R" "--no-preserve=mode" "--"
+        <STRING .SOURCE "/."> .DESTINATION>>
+    "cp -R">>
 
 <DEFINE ZORK-RUN-MKDIRS (PATH)
   <ZORK-RUN-REQUIRE
@@ -96,6 +96,7 @@
     <ZORK-RUN-MKDIRS .INITIAL>
     <ZORK-RUN-MKDIRS <STRING .DATA "/saves/current">>
     <ZORK-RUN-MKDIRS .HISTORY>
+    <ZORK-RUN-MKDIRS <STRING .DATA "/MTRZORK">>
 
     <SET INITIAL <STRING .INITIAL "/" .SEED-NAME>>
 
