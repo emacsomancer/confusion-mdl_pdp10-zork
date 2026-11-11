@@ -1,23 +1,15 @@
-; debug
-<PRINC "Loading zorkrun.mud">
-<TERPRI>
-
 <FLOAD
   <STRING
     <GNUSTO-GETENV "CONFUSION_MDL_SHARE">
     "/zorkrun.mud">>
-
-; debug
-<PRINC "Finished loading zorkrun.mud">
-<TERPRI>
 
 <SETG ZORK-MENU-ROOT <GNUSTO-GETCWD>>
 
 <DEFINE ZORK-MENU-DUNGEON ()
   <PROG
     ((PREFIX <GNUSTO-GETENV "CONFUSION_MDL_PREFIX">)
-     (RUNNER)
-     (STATUS))
+     (RUNNER <>)
+     (STATUS <>))
 
     <SET RUNNER
       <STRING
@@ -30,12 +22,13 @@
         <VECTOR .RUNNER>>>
 
     <COND
-      ((AND <FIX? .STATUS> <0? .STATUS>)
-       T)
+    ((==? .STATUS 0)
+    T)
       (T
        <PRINC "Dungeon exited with status ">
        <PRINC .STATUS>
        <TERPRI>)>>>
+
 
 <DEFINE ZORK-MENU-PRINT ()
   <PRINC "Confusion MDL — Zork">
@@ -55,6 +48,7 @@
   <TERPRI>
   <TERPRI>>
 
+
 <DEFINE ZORK-MENU-RUN (VERSION NEW-GAME)
   <PROG
     ((SHARE <GNUSTO-GETENV "CONFUSION_MDL_SHARE">)
@@ -63,11 +57,11 @@
      (EXPECT <GNUSTO-GETENV "CONFUSION_MDL_EXPECT">)
      (PREFIX <GNUSTO-GETENV "CONFUSION_MDL_PREFIX">)
      (TIMESTAMP <GNUSTO-GETENV "CONFUSION_MDL_TIMESTAMP">)
-     (SOURCE)
-     (DATA)
-     (BOOT)
-     (STATUS)
-     (SAVE-MODE))
+     (SOURCE <>)
+     (DATA <>)
+     (BOOT <>)
+     (STATUS <>)
+     (SAVE-MODE <>))
 
     ; Resolve the packaged game and writable user-data paths.
     <SET SOURCE
@@ -107,7 +101,7 @@
          <GNUSTO-EXECUTE
            .EXPECT
            <VECTOR
-             <STRING .PREFIX "/libexec/confusion-mdl/zorkrestore.exp">
+             <STRING .PREFIX "/libexec/confusion-mdl/zork-restore.exp">
              .MDLI
              .BOOT>>>)
       (T
@@ -121,58 +115,69 @@
 
     ; Report the child process result.
     <COND
-      ((AND <FIX? .STATUS> <0? .STATUS>)
-       T)
+    ((==? .STATUS 0)
+    T)
       (T
        <PRINC "Zork exited with status ">
        <PRINC .STATUS>
        <TERPRI>)>>>
 
+
 <DEFINE ZORK-MENU-START (VERSION)
-  <PRINC "  1. Continue">
-  <TERPRI>
-  <PRINC "  2. New game">
-  <TERPRI>
-  <PRINC "  3. Back">
-  <TERPRI>
-  <PRINC "Choice: ">
-  <SET ACTION <READ>>
-  <COND
-    (<==? .ACTION 1>
-     <ZORK-MENU-RUN .VERSION <>>)
-    (<==? .ACTION 2>
-     <ZORK-MENU-RUN .VERSION T>)
-    (ELSE
-     <PRINC "Returning to menu.">
-     <TERPRI>)>>
+  <PROG
+    ((ACTION <>))
+
+    <PRINC "  1. Continue">
+    <TERPRI>
+    <PRINC "  2. New game">
+    <TERPRI>
+    <PRINC "  3. Back">
+    <TERPRI>
+    <PRINC "Choice: ">
+    <SET ACTION <READ>>
+
+    <COND
+      (<==? .ACTION 1>
+       <ZORK-MENU-RUN .VERSION <>>)
+      (<==? .ACTION 2>
+       <ZORK-MENU-RUN .VERSION T>)
+      (ELSE
+       <PRINC "Returning to menu.">
+       <TERPRI>)>>>
+
 
 <DEFINE ZORK-MENU-LOOP ()
-  <ZORK-MENU-PRINT>
-  <PRINC "Choice: ">
-  <SET CHOICE <READ>>
-  <COND
-    (<OR <==? .CHOICE Q> <==? .CHOICE q>>
-     <PRINC "Goodbye.">
-     <TERPRI>)
-    (<==? .CHOICE 1>
-     <ZORK-MENU-RUN "771212" T>
-     <ZORK-MENU-LOOP>)
-    (<==? .CHOICE 2>
-     <ZORK-MENU-START "780124">
-     <ZORK-MENU-LOOP>)
-    (<==? .CHOICE 3>
-     <ZORK-MENU-START "791211">
-     <ZORK-MENU-LOOP>)
-    (<==? .CHOICE 4>
-     <ZORK-MENU-START "810722">
-     <ZORK-MENU-LOOP>)
-    (<==? .CHOICE 5>
-     <ZORK-MENU-DUNGEON>
-     <ZORK-MENU-LOOP>)     
-    (ELSE
-     <PRINC "Invalid choice.">
-     <TERPRI>
-     <ZORK-MENU-LOOP>)>>
+  <PROG
+    ((CHOICE <>))
+
+    <ZORK-MENU-PRINT>
+    <PRINC "Choice: ">
+    <SET CHOICE <READ>>
+
+    <COND
+      (<OR <==? .CHOICE Q> <==? .CHOICE q>>
+       <PRINC "Goodbye.">
+       <TERPRI>)
+      (<==? .CHOICE 1>
+       <ZORK-MENU-RUN "771212" T>
+       <ZORK-MENU-LOOP>)
+      (<==? .CHOICE 2>
+       <ZORK-MENU-START "780124">
+       <ZORK-MENU-LOOP>)
+      (<==? .CHOICE 3>
+       <ZORK-MENU-START "791211">
+       <ZORK-MENU-LOOP>)
+      (<==? .CHOICE 4>
+       <ZORK-MENU-START "810722">
+       <ZORK-MENU-LOOP>)
+      (<==? .CHOICE 5>
+       <ZORK-MENU-DUNGEON>
+       <ZORK-MENU-LOOP>)
+      (ELSE
+       <PRINC "Invalid choice.">
+       <TERPRI>
+       <ZORK-MENU-LOOP>)>>>
+
 
 <DEFINE ZORK-MENU ()
   <ZORK-MENU-LOOP>>

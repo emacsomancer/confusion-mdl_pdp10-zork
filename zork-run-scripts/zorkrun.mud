@@ -1,10 +1,10 @@
-
 <DEFINE ZORK-RUN-CHECK (RESULT OPERATION)
   <COND
-    (<AND <FIX? .RESULT> <0? .RESULT>>
-     .RESULT)
+  (<==? .RESULT 0>
+  .RESULT)
     (T
      <ERROR "ZORK-RUNNER-COMMAND-FAILED" .OPERATION .RESULT>)>>
+
 
 <DEFINE ZORK-RUN-REQUIRE (RESULT OPERATION)
   <COND
@@ -12,10 +12,12 @@
     (T
      <ERROR "ZORK-RUNNER-OPERATION-FAILED" .OPERATION .RESULT>)>>
 
+
 <DEFINE ZORK-RUN-EXISTS? (PATH)
   <COND
     (<GNUSTO-STAT .PATH> T)
     (T #FALSE ())>>
+
 
 <DEFINE ZORK-RUN-COPY (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
@@ -23,14 +25,19 @@
       <VECTOR "-p" "--" .SOURCE .DESTINATION>>
     "cp">>
 
+
 <DEFINE ZORK-RUN-COPY-TREE (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
     <GNUSTO-EXECUTE "cp"
       <VECTOR "-a" "--" <STRING .SOURCE "/."> .DESTINATION>>
     "cp -a">>
 
+
 <DEFINE ZORK-RUN-MKDIRS (PATH)
-  <ZORK-RUN-REQUIRE <GNUSTO-MAKEDIRS .PATH> "mkdir -p">>
+  <ZORK-RUN-REQUIRE
+    <GNUSTO-MAKEDIRS .PATH>
+    "mkdir -p">>
+
 
 <DEFINE ZORK-RUN-ARCHIVE (CURRENT HISTORY TIMESTAMP)
   <COND
@@ -39,21 +46,23 @@
        ((AND <STRING? .TIMESTAMP> <G? <LENGTH .TIMESTAMP> 0>)
         <ZORK-RUN-COPY .CURRENT
           <STRING .HISTORY "/ZORK-SAVE-" .TIMESTAMP ".SAVE">>)
-       (T <ERROR "MISSING-ARCHIVE-TIMESTAMP" .CURRENT>)>)
+       (T
+        <ERROR "MISSING-ARCHIVE-TIMESTAMP" .CURRENT>)>)
     (T T)>>
+
 
 <DEFINE ZORK-RUN-INIT (VERSION SOURCE DATA NEW-GAME TIMESTAMP)
   <PROG
-    ((SEED-REL)
-     (SEED-NAME)
-     (SAVE-MODE)
+    ((SEED-REL <>)
+     (SEED-NAME <>)
+     (SAVE-MODE <>)
      (FORCE-NEW <>)
-     (SEED)
-     (INITIAL)
-     (CURRENT)
-     (HISTORY)
-     (ACTIVE)
-     (BOOT))
+     (SEED <>)
+     (INITIAL <>)
+     (CURRENT <>)
+     (HISTORY <>)
+     (ACTIVE <>)
+     (BOOT <>))
 
     <COND
       ((==? .VERSION "771212")
@@ -69,9 +78,11 @@
        <SET SEED-REL "MDL/MADADV.SAVE">
        <SET SEED-NAME "MADADV.SAVE">
        <SET SAVE-MODE "game">)
-      (T <ERROR "UNKNOWN-ZORK-VERSION" .VERSION>)>
+      (T
+       <ERROR "UNKNOWN-ZORK-VERSION" .VERSION>)>
 
     <ZORK-RUN-MKDIRS .DATA>
+
     <COND
       ((NOT <ZORK-RUN-EXISTS? <STRING .DATA "/run.mud">>)
        <ZORK-RUN-COPY-TREE .SOURCE .DATA>)>
@@ -87,6 +98,7 @@
     <ZORK-RUN-MKDIRS .HISTORY>
 
     <SET INITIAL <STRING .INITIAL "/" .SEED-NAME>>
+
     <COND
       ((NOT <ZORK-RUN-EXISTS? .INITIAL>)
        <ZORK-RUN-COPY .SEED .INITIAL>)>
@@ -103,12 +115,14 @@
           <COND
             (<ZORK-RUN-EXISTS? .CURRENT>
              <ZORK-RUN-REQUIRE
-               <GNUSTO-UNLINK .CURRENT> "remove current game save">)>)>)
+               <GNUSTO-UNLINK .CURRENT>
+               "remove current game save">)>)>)
       ((AND <==? .SAVE-MODE "interpreter">
             <NOT <ZORK-RUN-EXISTS? .CURRENT>>)
        <ZORK-RUN-COPY .INITIAL .CURRENT>)>
 
     <GNUSTO-UNLINK .ACTIVE>
+
     <ZORK-RUN-REQUIRE
       <GNUSTO-SYMLINK "../saves/current/ZORK.SAVE" .ACTIVE>
       "create active save link">
@@ -118,4 +132,4 @@
         ((==? .SAVE-MODE "interpreter") .CURRENT)
         (T .INITIAL)>>
 
-    .BOOT>>>
+    .BOOT>>

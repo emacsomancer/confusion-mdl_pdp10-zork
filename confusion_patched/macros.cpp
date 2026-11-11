@@ -8318,35 +8318,77 @@ mdl_value_t *mdl_builtin_eval_gnusto_makedirs(mdl_value_t *form, mdl_value_t *ar
     mdl_value_t *arg, *modearg;
     std::string path;
     unsigned int mode = 0777;
+
     GETNEXTREQARG(arg, args);
     GETNEXTARG(modearg, args);
     NOMOREARGS(args);
-    if (!mdl_gnusto_path(arg, path)) return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+
+    if (!mdl_gnusto_path(arg, path))
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+
     if (modearg) {
-        if (modearg->type != MDL_TYPE_FIX || modearg->v.w < 0 || modearg->v.w > 07777)
+        if (modearg->type != MDL_TYPE_FIX ||
+            modearg->v.w < 0 ||
+            modearg->v.w > 07777)
             return mdl_call_error("SECOND-ARG-WRONG-TYPE", NULL);
+
         mode = (unsigned int)modearg->v.w;
     }
+
 #ifndef _WIN32
-    if (path.empty()) return mdl_gnusto_errno_result(ENOENT);
+    if (path.empty())
+        return mdl_gnusto_errno_result(ENOENT);
+
     std::string current;
     size_t pos = 0;
-    if (path[0] == '/') current = "/";
+
+    if (path[0] == '/')
+        current = "/";
+
     while (pos < path.size()) {
-        while (pos < path.size() && path[pos] == '/') ++pos;
+        while (pos < path.size() && path[pos] == '/')
+            ++pos;
+
         size_t end = path.find('/', pos);
-        if (end == std::string::npos) end = path.size();
-        if (end == pos) break;
-        if (!current.empty() && current[current.size()-1] != '/') current += '/';
+        if (end == std::string::npos)
+            end = path.size();
+
+        if (end == pos)
+            break;
+
+        if (!current.empty() && current[current.size() - 1] != '/')
+            current += '/';
+
         current.append(path, pos, end - pos);
-        if (mkdir(current.c_str(), mode) != 0) {
-            if (errno != EEXIST) return mdl_gnusto_errno_result(errno);
-            struct stat st;
-            if (stat(current.c_str(), &st) != 0) return mdl_gnusto_errno_result(errno);
-            if (!S_ISDIR(st.st_mode)) return mdl_gnusto_errno_result(ENOTDIR);
+
+        struct stat st;
+
+        if (stat(current.c_str(), &st) == 0) {
+            if (!S_ISDIR(st.st_mode))
+                return mdl_gnusto_errno_result(ENOTDIR);
+        } else {
+            int stat_error = errno;
+
+            if (stat_error != ENOENT)
+                return mdl_gnusto_errno_result(stat_error);
+
+            if (mkdir(current.c_str(), mode) != 0) {
+                int mkdir_error = errno;
+
+                if (mkdir_error != EEXIST)
+                    return mdl_gnusto_errno_result(mkdir_error);
+
+                if (stat(current.c_str(), &st) != 0)
+                    return mdl_gnusto_errno_result(errno);
+
+                if (!S_ISDIR(st.st_mode))
+                    return mdl_gnusto_errno_result(ENOTDIR);
+            }
         }
+
         pos = end;
     }
+
     return mdl_value_T;
 #else
     return mdl_call_error("GNUSTO-MAKEDIRS-UNSUPPORTED", NULL);
