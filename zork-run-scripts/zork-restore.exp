@@ -1,0 +1,71 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+
+if {$argc != 2} {
+    send_user "Usage: zorkrestore.exp MDLI BOOT_FILE\n"
+    exit 2
+}
+
+set mdli [lindex $argv 0]
+set boot_file [lindex $argv 1]
+
+spawn -noecho $mdli -r $boot_file
+
+# Wait for the initial game prompt.
+expect {
+    -re {> ?$} {}
+    timeout {
+        send_user "\nTimed out waiting for the Zork prompt.\n"
+        catch {close}
+        catch {wait}
+        exit 124
+    }
+    eof {
+        send_user "\nConfusion exited before the Zork prompt.\n"
+        exit 1
+    }
+}
+
+# Restore the game-level save.
+send -- "restore\r"
+
+set restored 0
+
+expect {
+    -re {(?i)(restore.*(fail|error)|cannot restore|can.t restore)} {
+        send_user "\nZork reported a restore failure.\n"
+        catch {close}
+        catch {wait}
+        exit 1
+    }
+    -re {Restored\.|Restoring\.} {
+        set restored 1
+        exp_continue
+    }
+    -re {> ?$} {
+        if {!$restored} {
+            send_user "\nZork returned to the prompt without confirming a restore.\n"
+            catch {close}
+            catch {wait}
+            exit 1
+        }
+    }
+    timeout {
+        send_user "\nTimed out waiting for Zork to restore its save.\n"
+        catch {close}
+        catch {wait}
+        exit 124
+    }
+    eof {
+        send_user "\nConfusion exited during game restore.\n"
+        exit 1
+    }
+}
+
+# Hand the terminal to the user.
+set timeout -1
+interact
+
+set result [wait]
+exit [lindex $result 3]
