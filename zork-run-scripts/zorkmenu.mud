@@ -19,7 +19,7 @@
 <DEFINE ZORK-MENU-RUN (VERSION DATE TITLE NEW-GAME)
   <COND
     (<NOT <0? <GNUSTO-EXECUTE
-      "zork-mdli-run"
+      "zork-version"
       <COND
         (.NEW-GAME
           <VECTOR .VERSION .DATE .TITLE "--new-game">)
