@@ -50,8 +50,17 @@ do
 done
 
 # Interactive selector and direct version launchers.
+# Interactive MDL menu and runtime support.
 install -m755 zork-run-scripts/zork-mdl "$bin/zork-mdl"
-install -m644 zork-run-scripts/zork-version "$bin/zork-version"
+
+install -m644 zork-run-scripts/zorkmenu.mud \
+        "$share/zorkmenu.mud"
+
+install -m644 zork-run-scripts/zorkrun.mud \
+        "$share/zorkrun.mud"
+
+install -m644 zork-run-scripts/zorkrestore.exp \
+        "$libexec/zorkrestore.exp"
 
 # for year in 1977 1978 1979 1981; do
 #     ln -s zork-version "$bin/zork-$year"

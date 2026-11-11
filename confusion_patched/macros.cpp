@@ -3744,7 +3744,6 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
 
     // Re-acquire the atom in case of restore.
     cur_frame->subr = mdl_get_atom("TOPLEVEL!-", true, NULL);
-
     suppress_listen_message = jumpval == LONGJMP_RESTORE;
 
     if (jumpval == LONGJMP_RESTORE && cur_frame->result)
@@ -3754,7 +3753,7 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
 
     cur_frame->result = NULL;
 
-    if (startupfile)
+    if (startupfile && !jumpval)
     {
         mdl_std_apply(
             mdl_value_builtin_fload,
@@ -3766,7 +3765,7 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
 
         mdl_value_t *menu_atom = mdl_get_atom("ZORK-MENU", true, NULL);
         mdl_value_t *menu_form =
-          mdl_make_list(mdl_cons_internal(menu_atom, NULL), MDL_TYPE_FORM);
+            mdl_make_list(mdl_cons_internal(menu_atom, NULL), MDL_TYPE_FORM);
 
         mdl_eval(menu_form);
     }
