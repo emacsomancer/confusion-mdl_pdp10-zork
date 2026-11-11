@@ -13,7 +13,7 @@
 
 <DEFINE RUN-CHECK (STATUS OPERATION)
   <COND
-    (<NOT <ZERO? .STATUS>>
+    (<NOT <0? .STATUS>>
       <PRINC "zorkbuild: process failed: ">
       <PRINC .OPERATION>
       <PRINC " (exit ">

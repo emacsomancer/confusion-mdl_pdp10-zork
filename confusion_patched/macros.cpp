@@ -3726,7 +3726,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     return result;
 }
 
-void mdl_toplevel(FILE *restorefile)
+void mdl_toplevel(FILE *restorefile, const char *startupfile)
 {
     int jumpval;
 
@@ -3734,6 +3734,16 @@ void mdl_toplevel(FILE *restorefile)
     cur_frame->frame_flags |= MDL_FRAME_FLAGS_TRUEFRAME;
     cur_frame->args = mdl_make_list(NULL);
     jumpval = mdl_setjmp(cur_frame->interp_frame);
+    if (startupfile)
+      {
+        mdl_std_apply(
+                      mdl_value_builtin_fload,
+                      mdl_make_list(mdl_cons_internal(
+                                                      mdl_value_builtin_fload,
+                                                      mdl_cons_internal(mdl_new_string(startupfile), NULL))),
+                      MDL_TYPE_SUBR,
+                      true);
+      }
     if (restorefile && !jumpval)
     {
         mdl_read_image(restorefile);

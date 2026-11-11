@@ -60,9 +60,10 @@ extern const char no_warranty[] = "THERE IS NO WARRANTY FOR THIS PROGRAM, TO THE
 
 int main(int argc, char *argv[])
 {
-    static const char *optstring = "r:";
+    static const char *optstring = "r:f:";
     int optchar;
-    FILE * restorefile = NULL;
+    FILE *restorefile = NULL;
+    const char *startupfile = NULL;
 
     GC_INIT();
     mdl_interp_init();
@@ -80,9 +81,14 @@ int main(int argc, char *argv[])
             }
             break;
         }
+        {
+          case 'f':
+            startupfile = optarg;
+            break;
+        }
     }
         
 //    mdl_rep_loop();
     puts(copyright_notice.c_str());
-    mdl_toplevel(restorefile);
+    mdl_toplevel(restorefile, startupfile);
 }
