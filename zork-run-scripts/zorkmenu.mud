@@ -22,12 +22,12 @@
       "zork-mdli-run"
       <COND
         (.NEW-GAME
-          <VECTOR "zork-mdli-run" .VERSION .DATE .TITLE "--new-game">)
+          <VECTOR .VERSION .DATE .TITLE "--new-game">)
         (ELSE
-          <VECTOR "zork-mdli-run" .VERSION .DATE .TITLE>)>>>>
+          <VECTOR .VERSION .DATE .TITLE>)>>>>
       <PRINC "Unable to launch Zork.">
       <TERPRI>)>>
-
+      
 <DEFINE ZORK-MENU-LOOP ()
   <ZORK-MENU-PRINT>
   <PRINC "Choice: ">
