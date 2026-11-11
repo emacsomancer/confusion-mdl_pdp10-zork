@@ -1,31 +1,32 @@
-
 <DEFINE ZORK-MENU-PRINT ()
   <PRINC "Confusion MDL — Zork">
-  <CRLF>
+  <TERPRI>
   <PRINC "">
-  <CRLF>
+  <TERPRI>
   <PRINC "  1. Zork 1977-12-12 (500 points)">
-  <CRLF>
+  <TERPRI>
   <PRINC "  2. Zork 1978-01-24">
-  <CRLF>
+  <TERPRI>
   <PRINC "  3. Zork 1979-12-11 (616 points)">
-  <CRLF>
+  <TERPRI>
   <PRINC "  4. Zork 1981-07-22">
-  <CRLF>
+  <TERPRI>
   <PRINC "  Q. Quit">
-  <CRLF>
+  <TERPRI>
   <PRINC "">
-  <CRLF>)
+  <TERPRI>>
 
 <DEFINE ZORK-MENU-RUN (VERSION DATE TITLE NEW-GAME)
   <COND
     (<NOT <0? <GNUSTO-EXECUTE
       "zork-mdli-run"
-      <VECTOR "zork-mdli-run" .VERSION .DATE .TITLE
-        <COND (.NEW-GAME "--new-game") (ELSE "")>>
-      ]>>
+      <COND
+        (.NEW-GAME
+          <VECTOR "zork-mdli-run" .VERSION .DATE .TITLE "--new-game">)
+        (ELSE
+          <VECTOR "zork-mdli-run" .VERSION .DATE .TITLE>)>>>>
       <PRINC "Unable to launch Zork.">
-      <CRLF>)>>>
+      <TERPRI>)>>
 
 <DEFINE ZORK-MENU-LOOP ()
   <ZORK-MENU-PRINT>
@@ -34,7 +35,7 @@
   <COND
     (<OR <==? .CHOICE Q> <==? .CHOICE q>>
       <PRINC "Goodbye.">
-      <CRLF>)
+      <TERPRI>)
     (<==? .CHOICE 1>
       <ZORK-MENU-RUN "771212" "1977-12-12" "Zork 1977-12-12" T>
       <ZORK-MENU-LOOP>)
@@ -49,25 +50,26 @@
       <ZORK-MENU-LOOP>)
     (ELSE
       <PRINC "Invalid choice.">
-      <CRLF>
-      <ZORK-MENU-LOOP>)>>>
+      <TERPRI>
+      <ZORK-MENU-LOOP>)>>
 
 <DEFINE ZORK-MENU-START (VERSION DATE TITLE)
   <PRINC "  1. Continue">
-  <CRLF>
+  <TERPRI>
   <PRINC "  2. New game">
-  <CRLF>
+  <TERPRI>
   <PRINC "  3. Back">
-  <CRLF>
+  <TERPRI>
   <PRINC "Choice: ">
   <SET ACTION <READ>>
   <COND
     (<==? .ACTION 1>
-      <ZORK-MENU-RUN .VERSION .DATE .TITLE <> >)
+      <ZORK-MENU-RUN .VERSION .DATE .TITLE <>>)
     (<==? .ACTION 2>
       <ZORK-MENU-RUN .VERSION .DATE .TITLE T>)
     (ELSE
       <PRINC "Returning to menu.">
-      <CRLF>)>>>
+      <TERPRI>)>>
 
-<ZORK-MENU-LOOP>
+<DEFINE ZORK-MENU ()
+  <ZORK-MENU-LOOP>>
