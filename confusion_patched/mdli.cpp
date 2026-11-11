@@ -74,20 +74,18 @@ int main(int argc, char *argv[])
         {
         case 'r':
             restorefile = fopen(optarg, "rb");
-            if (!restorefile) 
+            if (!restorefile)
             {
-                fprintf(stderr, "Couldn't open restore file %s", optarg);
+                fprintf(stderr, "Couldn't open restore file %s\n", optarg);
                 exit(-1);
             }
             break;
-        }
-        {
-          case 'f':
+
+        case 'f':
             startupfile = optarg;
             break;
         }
-    }
-        
+    }        
 //    mdl_rep_loop();
     puts(copyright_notice.c_str());
     mdl_toplevel(restorefile, startupfile);
