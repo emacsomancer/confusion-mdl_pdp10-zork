@@ -59,8 +59,8 @@ install -m644 zork-run-scripts/zorkmenu.mud \
 install -m644 zork-run-scripts/zorkrun.mud \
         "$share/zorkrun.mud"
 
-install -m644 zork-run-scripts/zorkrestore.exp \
-        "$libexec/zorkrestore.exp"
+install -m644 zork-run-scripts/zork-restore.exp \
+        "$libexec/zork-restore.exp"
 
 # for year in 1977 1978 1979 1981; do
 #     ln -s zork-version "$bin/zork-$year"
