@@ -3734,33 +3734,43 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
     cur_frame->frame_flags |= MDL_FRAME_FLAGS_TRUEFRAME;
     cur_frame->args = mdl_make_list(NULL);
     jumpval = mdl_setjmp(cur_frame->interp_frame);
-    if (startupfile)
-      {
-        mdl_std_apply(
-                      mdl_value_builtin_fload,
-                      mdl_make_list(mdl_cons_internal(
-                                                      mdl_value_builtin_fload,
-                                                      mdl_cons_internal(mdl_new_string(startupfile), NULL))),
-                      MDL_TYPE_SUBR,
-                      true);
-      }
+
     if (restorefile && !jumpval)
     {
         mdl_read_image(restorefile);
         fprintf(stderr, "Initial restore failed");
         exit(-1);
     }
-    // re-acquire the atom in case of restore
+
+    // Re-acquire the atom in case of restore.
     cur_frame->subr = mdl_get_atom("TOPLEVEL!-", true, NULL);
+
     suppress_listen_message = jumpval == LONGJMP_RESTORE;
+
     if (jumpval == LONGJMP_RESTORE && cur_frame->result)
     {
         mdl_eval(cur_frame->result);
     }
+
     cur_frame->result = NULL;
+
+    if (startupfile)
+    {
+        mdl_std_apply(
+            mdl_value_builtin_fload,
+            mdl_make_list(mdl_cons_internal(
+                mdl_value_builtin_fload,
+                mdl_cons_internal(mdl_new_string(startupfile), NULL))),
+            MDL_TYPE_SUBR,
+            true);
+    }
     if (!mdl_chan_at_eof(mdl_get_default_inchan()))
     {
-        mdl_std_apply(mdl_value_builtin_listen, mdl_make_list(mdl_cons_internal(mdl_value_builtin_listen, NULL)), MDL_TYPE_SUBR, true);
+        mdl_std_apply(
+            mdl_value_builtin_listen,
+            mdl_make_list(mdl_cons_internal(mdl_value_builtin_listen, NULL)),
+            MDL_TYPE_SUBR,
+            true);
     }
     cur_frame = NULL;
 }
