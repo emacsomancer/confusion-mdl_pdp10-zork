@@ -3763,7 +3763,14 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
                 mdl_cons_internal(mdl_new_string(startupfile), NULL))),
             MDL_TYPE_SUBR,
             true);
+
+        mdl_value_t *menu_atom = mdl_get_atom("ZORK-MENU", true, NULL);
+        mdl_value_t *menu_form =
+            mdl_make_list(mdl_cons_internal(menu_atom, NULL));
+
+        mdl_eval(menu_form);
     }
+
     if (!mdl_chan_at_eof(mdl_get_default_inchan()))
     {
         mdl_std_apply(
@@ -3772,6 +3779,7 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
             MDL_TYPE_SUBR,
             true);
     }
+
     cur_frame = NULL;
 }
 
