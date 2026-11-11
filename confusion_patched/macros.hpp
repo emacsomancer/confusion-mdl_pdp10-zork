@@ -207,4 +207,4 @@ __declspec(noreturn) void mdl_error(const char* err);
 #else
 void mdl_error(const char *err)  __attribute__((noreturn));
 #endif
-void mdl_toplevel(FILE *restorefile, const char *startupfile)
+void mdl_toplevel(FILE *restorefile, const char *startupfile);
