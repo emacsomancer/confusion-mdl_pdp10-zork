@@ -8478,13 +8478,19 @@ mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *arg
     std::vector<std::string> storage;
     storage.push_back(program);
 
-    mdl_value_t *argv = VREST(argvarg, 0);
-    for (int i = 0; i < VLENGTH(argvarg); ++i) {
-        if (argv[i].type != MDL_TYPE_STRING ||
-            memchr(argv[i].v.s.p, '\0', argv[i].v.s.l) != NULL)
-            return mdl_call_error("EXECUTE-ARGUMENT-MUST-BE-STRING", NULL);
-        storage.push_back(std::string(argv[i].v.s.p, argv[i].v.s.l));
-    }
+int argc = VLENGTH(argvarg);
+
+ if (argc > 0) {
+   mdl_value_t *argv = VREST(argvarg, 0);
+
+   for (int i = 0; i < argc; ++i) {
+     if (argv[i].type != MDL_TYPE_STRING ||
+         memchr(argv[i].v.s.p, '\0', argv[i].v.s.l) != NULL)
+       return mdl_call_error("EXECUTE-ARGUMENT-MUST-BE-STRING", NULL);
+
+     storage.push_back(std::string(argv[i].v.s.p, argv[i].v.s.l));
+   }
+ }
 
     std::vector<char *> cargv;
     for (std::vector<std::string>::iterator i = storage.begin();
