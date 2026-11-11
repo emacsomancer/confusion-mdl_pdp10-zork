@@ -3766,7 +3766,7 @@ void mdl_toplevel(FILE *restorefile, const char *startupfile)
 
         mdl_value_t *menu_atom = mdl_get_atom("ZORK-MENU", true, NULL);
         mdl_value_t *menu_form =
-            mdl_make_list(mdl_cons_internal(menu_atom, NULL));
+          mdl_make_list(mdl_cons_internal(menu_atom, NULL), MDL_TYPE_FORM);
 
         mdl_eval(menu_form);
     }
