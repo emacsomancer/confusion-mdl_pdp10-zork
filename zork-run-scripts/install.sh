@@ -11,27 +11,15 @@ doc="$out/share/doc/confusion-mdl-zork"
 
 mkdir -p "$bin" "$libexec" "$share" "$doc"
 
-# Expect is used by the 1979 and 1981 Continue launchers.
+# Expect is used by the 1979 and 1981 Continue paths.
 test -x "$expect_prefix/bin/expect"
 ln -s "$expect_prefix/bin/expect" "$libexec/expect"
 
-# Confusion interpreter.
+# Confusion MDL interpreter.
 install -m755 confusion_patched/mdli "$bin/mdli"
 
-# MDL runner.
-install -m644 zork-run-scripts/zork-mdli-run \
-    "$libexec/zork-mdli-run"
-
-# Dungeon runner.
-install -m644 zork-run-scripts/dungeon-3.2b-run \
-    "$libexec/dungeon-3.2b-run"
-
-# Dungeon executable, source, documentation, and data.
+# Dungeon 3.2b executable, source, documentation, and data.
 cp -R dungeon_3_2b "$share/"
-
-# Install the self-locating Dungeon launcher.
-install -m644 zork-run-scripts/dungeon.sh \
-    "$share/dungeon_3_2b/dungeon.sh"
 
 # Playable MDL game trees.
 for version in 771212 780124 791211 810722; do
@@ -40,7 +28,7 @@ for version in 771212 780124 791211 810722; do
         "$share/mdlzork_$version/"
 done
 
-# Additional reference/source trees. No MDL launchers.
+# Additional reference/source trees.
 for directory in \
     mdlzork_780402 \
     zork_285 \
@@ -49,22 +37,19 @@ do
     cp -R "$directory" "$share/"
 done
 
-# Interactive selector and direct version launchers.
-# Interactive MDL menu and runtime support.
+# Sole application entry point.
 install -m755 zork-run-scripts/zork-mdl "$bin/zork-mdl"
 
+# MDL menu and runtime support.
 install -m644 zork-run-scripts/zorkmenu.mud \
-        "$share/zorkmenu.mud"
+    "$share/zorkmenu.mud"
 
 install -m644 zork-run-scripts/zorkrun.mud \
-        "$share/zorkrun.mud"
+    "$share/zorkrun.mud"
 
+# Expect-based restore support for 1979 and 1981.
 install -m644 zork-run-scripts/zork-restore.exp \
-        "$libexec/zork-restore.exp"
-
-# for year in 1977 1978 1979 1981; do
-#     ln -s zork-version "$bin/zork-$year"
-# done
+    "$libexec/zork-restore.exp"
 
 # Interpreter license.
 install -m644 confusion_patched/COPYING "$doc/COPYING"

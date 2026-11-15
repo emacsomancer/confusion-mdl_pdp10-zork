@@ -92,6 +92,8 @@
          (<NOT <GIRGOL-CHDIR .DATA>>
           <ERROR "CANNOT-ENTER-ZORK-DIRECTORY" .DATA>)>
 
+       <ZORK-MENU-INTRO>
+
        <SET STATUS
          <COND
            (.NEW-GAME
@@ -121,6 +123,54 @@
           <PRINC "Zork exited with status ">
           <PRINC .STATUS>
           <TERPRI>)>)>>>
+
+<DEFINE ZORK-MENU-INTRO ()
+  <PRINC "">
+  <TERPRI>
+  <PRINC "  CONVOLUTION MDL">
+  <TERPRI>
+  <PRINC "  =================">
+  <TERPRI>
+  <TERPRI>
+  <PRINC "  Initializing the Quendorian Muddle environment...">
+  <TERPRI>
+  <SLEEP-MS 350>
+  <PRINC "  Loading runtime services">
+  <TERPRI>
+  <SLEEP-MS 250>
+  <PRINC "  Preparing VAXUM interface">
+  <TERPRI>
+  <SLEEP-MS 350>
+  <TERPRI>
+  <PRINC "MDL> ">
+  <SLEEP-MS 250>
+  <PRINC "V">
+  <SLEEP-MS 100>
+  <PRINC "A">
+  <SLEEP-MS 100>
+  <PRINC "X">
+  <SLEEP-MS 100>
+  <PRINC "U">
+  <SLEEP-MS 100>
+  <PRINC "M">
+  <SLEEP-MS 100>
+  <PRINC " ">
+  <SLEEP-MS 100>
+  <PRINC "M">
+  <SLEEP-MS 100>
+  <PRINC "D">
+  <SLEEP-MS 100>
+  <PRINC "L">
+  <SLEEP-MS 250>
+  <TERPRI>
+  <SLEEP-MS 350>
+  <PRINC "  Evaluating VAXUM MDL">
+  <TERPRI>
+  <SLEEP-MS 500>
+  <PRINC "  Transferring control to the game runtime">
+  <TERPRI>
+  <SLEEP-MS 650>
+  <TERPRI>>
 
 <DEFINE ZORK-MENU-START (VERSION)
   <PROG
