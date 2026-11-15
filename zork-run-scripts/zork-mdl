@@ -4,7 +4,6 @@ set -eu
 bin_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 prefix=$(CDPATH= cd -- "$bin_dir/.." && pwd -P)
 
-mdli="$prefix/bin/mdli"
 share="$prefix/share/confusion-mdl"
 
 if [ ! -t 0 ] || [ ! -t 1 ]; then
@@ -20,17 +19,18 @@ if [ ! -t 0 ] || [ ! -t 1 ]; then
         -- "$0" "$@"
 fi
 
-if [ ! -x "$mdli" ]; then
-    printf 'Interpreter not found: %s\n' "$mdli" >&2
+if ! mdli=$(command -v mdli); then
+    printf '%s\n' \
+        'MDL interpreter not found: mdli is not available on PATH.' \
+        'Install zork-vaxum-mdl or make mdli available on PATH.' >&2
     exit 1
 fi
 
 export CONFUSION_MDL_PREFIX="$prefix"
 export CONFUSION_MDL_SHARE="$share"
-export CONFUSION_MDL_MDLI="$mdli"
 export CONFUSION_MDL_EXPECT="$prefix/libexec/confusion-mdl/expect"
 export CONFUSION_MDL_DATA_ROOT="${XDG_DATA_HOME:-${HOME:?}/.local/share}/confusion-mdl"
 export CONFUSION_MDL_TIMESTAMP
 CONFUSION_MDL_TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 
-exec "$mdli" -f "$share/zorkmenu.mud"
+exec "$mdli" -f "$share/zorkmenu.mud" "$@"
