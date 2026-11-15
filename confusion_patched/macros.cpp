@@ -47,6 +47,7 @@
 #ifndef _WIN32
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 #endif
 // for millisecond SLEEP
 #include <limits.h>
