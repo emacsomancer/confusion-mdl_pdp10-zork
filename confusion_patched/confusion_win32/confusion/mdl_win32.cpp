@@ -38,6 +38,11 @@ unsigned int sleep(unsigned int s)
   return 0;
 }
 
+void sleep_ms(unsigned int milliseconds)
+{
+    Sleep(milliseconds);
+}
+
 void swab(const void* s, void* d, size_t n)
 {
   swab((char*)s,(char*)d,(int)n);

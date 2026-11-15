@@ -28,6 +28,7 @@ off_t ftello(FILE*);
 int getopt(int, char**, const char*);
 int getppid(void);
 unsigned int sleep(unsigned int);
+void sleep_ms(unsigned int milliseconds);
 void swab(const void*, void*, size_t);
 
 int getrusage(int, struct rusage*);

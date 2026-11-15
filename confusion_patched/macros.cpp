@@ -48,6 +48,9 @@
 #include <unistd.h>
 #include <time.h>
 #endif
+// for millisecond SLEEP
+#include <limits.h>
+
 
 #define DECODE_TENEX_FILESPECS
 
@@ -8177,6 +8180,41 @@ mdl_value_t *mdl_builtin_eval_sleep(mdl_value_t *form, mdl_value_t *args)
         return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SLEEP time negative", NULL);
     fflush(stdout); // let the user see while we rest
     sleep(fix->v.w);
+
+    return mdl_value_T;
+}
+
+// millisecond SLEEP
+mdl_value_t *mdl_builtin_eval_sleep_ms(mdl_value_t *form, mdl_value_t *args)
+/* SUBR SLEEP-MS */
+{
+    mdl_value_t *fix;
+    ARGSETUP(args);
+    GETNEXTREQARG(fix, args);
+    NOMOREARGS(args);
+
+    if (fix->type != MDL_TYPE_FIX)
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+
+    if (fix->v.w < 0 || fix->v.w > UINT_MAX)
+        return mdl_call_error_ext(
+            "ARGUMENT-OUT-OF-RANGE",
+            "SLEEP-MS time outside supported range",
+            NULL
+        );
+
+    fflush(stdout);
+
+#ifdef _WIN32
+    sleep_ms((unsigned int)fix->v.w);
+#else
+    struct timespec remaining;
+    remaining.tv_sec = fix->v.w / 1000;
+    remaining.tv_nsec = (fix->v.w % 1000) * 1000000L;
+
+    while (nanosleep(&remaining, &remaining) == -1 && errno == EINTR)
+        ;
+#endif
 
     return mdl_value_T;
 }
