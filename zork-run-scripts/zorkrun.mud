@@ -15,27 +15,26 @@
 
 <DEFINE ZORK-RUN-EXISTS? (PATH)
   <COND
-    (<GNUSTO-STAT .PATH> T)
+    (<GUNCHO-STAT .PATH> T)
     (T #FALSE ())>>
 
 
 <DEFINE ZORK-RUN-COPY (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
-    <GNUSTO-EXECUTE "cp"
-      <VECTOR "-p" "--" .SOURCE .DESTINATION>>
+    <GUNCHO-EXECUTE "cp"
+      <VECTOR "--no-preserve=mode" "--" .SOURCE .DESTINATION>>
     "cp">>
-
 
 <DEFINE ZORK-RUN-COPY-TREE (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
-    <GNUSTO-EXECUTE "cp"
+    <GUNCHO-EXECUTE "cp"
       <VECTOR "-R" "--no-preserve=mode" "--"
         <STRING .SOURCE "/."> .DESTINATION>>
-    "cp -R">>
-
+        "cp -R">>
+        
 <DEFINE ZORK-RUN-MKDIRS (PATH)
   <ZORK-RUN-REQUIRE
-    <GNUSTO-MAKEDIRS .PATH>
+    <GUNCHO-MAKEDIRS .PATH>
     "mkdir -p">>
 
 
@@ -43,7 +42,7 @@
   <COND
     (<ZORK-RUN-EXISTS? .CURRENT>
      <COND
-       ((AND <STRING? .TIMESTAMP> <G? <LENGTH .TIMESTAMP> 0>)
+     (<AND .TIMESTAMP <G? <LENGTH .TIMESTAMP> 0>>
         <ZORK-RUN-COPY .CURRENT
           <STRING .HISTORY "/ZORK-SAVE-" .TIMESTAMP ".SAVE">>)
        (T
@@ -51,86 +50,64 @@
     (T T)>>
 
 
+
 <DEFINE ZORK-RUN-INIT (VERSION SOURCE DATA NEW-GAME TIMESTAMP)
   <PROG
-    ((SEED-REL <>)
-     (SEED-NAME <>)
-     (SAVE-MODE <>)
-     (FORCE-NEW <>)
-     (SEED <>)
+    ((SEED <>)
      (INITIAL <>)
      (CURRENT <>)
      (HISTORY <>)
-     (ACTIVE <>)
-     (BOOT <>))
+     (SAVE-DIR <>))
 
     <COND
-      ((==? .VERSION "771212")
-       <SET SEED-REL "SAVEFILE/ZORK.SAVE">
-       <SET SEED-NAME "ZORK.SAVE">
-       <SET SAVE-MODE "interpreter">
-       <SET FORCE-NEW T>)
-      ((==? .VERSION "780124")
-       <SET SEED-REL "SAVEFILE/ZORK.SAVE">
-       <SET SEED-NAME "ZORK.SAVE">
-       <SET SAVE-MODE "interpreter">)
-      ((OR <==? .VERSION "791211"> <==? .VERSION "810722">)
-       <SET SEED-REL "MDL/MADADV.SAVE">
-       <SET SEED-NAME "MADADV.SAVE">
-       <SET SAVE-MODE "game">)
+      ((OR <==? .VERSION "771212">
+           <==? .VERSION "780124">
+           <==? .VERSION "791211">
+           <==? .VERSION "810722">)
+       T)
       (T
        <ERROR "UNKNOWN-ZORK-VERSION" .VERSION>)>
 
+    ; Copy the packaged game tree on first use.
     <ZORK-RUN-MKDIRS .DATA>
 
     <COND
       ((NOT <ZORK-RUN-EXISTS? <STRING .DATA "/run.mud">>)
        <ZORK-RUN-COPY-TREE .SOURCE .DATA>)>
 
-    <SET SEED <STRING .DATA "/" .SEED-REL>>
-    <SET INITIAL <STRING .DATA "/saves/initial">>
-    <SET CURRENT <STRING .DATA "/saves/current/ZORK.SAVE">>
+    ; Every release uses its rebuilt interpreter image.
+    <SET SEED <STRING .DATA "/MDL/MADADV.SAVE">>
+    <SET INITIAL <STRING .DATA "/saves/initial/MADADV.SAVE">>
     <SET HISTORY <STRING .DATA "/saves/history">>
-    <SET ACTIVE <STRING .DATA "/MTRZORK/ZORK.SAVE">>
 
-    <ZORK-RUN-MKDIRS .INITIAL>
-    <ZORK-RUN-MKDIRS <STRING .DATA "/saves/current">>
+    ; Keep each release's historical player-save location.
+    <COND
+      ((OR <==? .VERSION "771212">
+           <==? .VERSION "780124">)
+       <SET SAVE-DIR <STRING .DATA "/SAVEFILE">>)
+      (T
+       <SET SAVE-DIR <STRING .DATA "/MTRZORK">>)>
+
+    <SET CURRENT <STRING .SAVE-DIR "/ZORK.SAVE">>
+
+    <ZORK-RUN-MKDIRS <STRING .DATA "/saves/initial">>
     <ZORK-RUN-MKDIRS .HISTORY>
-    <ZORK-RUN-MKDIRS <STRING .DATA "/MTRZORK">>
+    <ZORK-RUN-MKDIRS .SAVE-DIR>
 
-    <SET INITIAL <STRING .INITIAL "/" .SEED-NAME>>
-
+    ; Keep a private copy of the initialized interpreter image.
     <COND
       ((NOT <ZORK-RUN-EXISTS? .INITIAL>)
        <ZORK-RUN-COPY .SEED .INITIAL>)>
 
-    <COND (.FORCE-NEW <SET NEW-GAME T>)>
-
+    ; Archive the previous player save before starting a new game.
     <COND
       (.NEW-GAME
        <ZORK-RUN-ARCHIVE .CURRENT .HISTORY .TIMESTAMP>
        <COND
-         ((==? .SAVE-MODE "interpreter")
-          <ZORK-RUN-COPY .INITIAL .CURRENT>)
-         (T
-          <COND
-            (<ZORK-RUN-EXISTS? .CURRENT>
-             <ZORK-RUN-REQUIRE
-               <GNUSTO-UNLINK .CURRENT>
-               "remove current game save">)>)>)
-      ((AND <==? .SAVE-MODE "interpreter">
-            <NOT <ZORK-RUN-EXISTS? .CURRENT>>)
-       <ZORK-RUN-COPY .INITIAL .CURRENT>)>
+         ((ZORK-RUN-EXISTS? .CURRENT)
+          <ZORK-RUN-REQUIRE
+            <GUNCHO-UNLINK .CURRENT>
+            "remove previous player save">)>)
+      (T T)>
 
-    <GNUSTO-UNLINK .ACTIVE>
-
-    <ZORK-RUN-REQUIRE
-      <GNUSTO-SYMLINK "../saves/current/ZORK.SAVE" .ACTIVE>
-      "create active save link">
-
-    <SET BOOT
-      <COND
-        ((==? .SAVE-MODE "interpreter") .CURRENT)
-        (T .INITIAL)>>
-
-    .BOOT>>
+    .INITIAL>>

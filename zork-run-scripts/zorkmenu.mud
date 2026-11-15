@@ -1,13 +1,13 @@
 <FLOAD
   <STRING
-    <GNUSTO-GETENV "CONFUSION_MDL_SHARE">
+    <GUNCHO-GETENV "CONFUSION_MDL_SHARE">
     "/zorkrun.mud">>
 
-<SETG ZORK-MENU-ROOT <GNUSTO-GETCWD>>
+<SETG ZORK-MENU-ROOT <GUNCHO-GETCWD>>
 
 <DEFINE ZORK-MENU-DUNGEON ()
   <PROG
-    ((PREFIX <GNUSTO-GETENV "CONFUSION_MDL_PREFIX">)
+    ((PREFIX <GUNCHO-GETENV "CONFUSION_MDL_PREFIX">)
      (RUNNER <>)
      (STATUS <>))
 
@@ -17,7 +17,7 @@
         "/libexec/confusion-mdl/dungeon-3.2b-run">>
 
     <SET STATUS
-      <GNUSTO-EXECUTE
+      <GUNCHO-EXECUTE
         "sh"
         <VECTOR .RUNNER>>>
 
@@ -48,80 +48,79 @@
   <TERPRI>
   <TERPRI>>
 
-
 <DEFINE ZORK-MENU-RUN (VERSION NEW-GAME)
   <PROG
-    ((SHARE <GNUSTO-GETENV "CONFUSION_MDL_SHARE">)
-     (DATA-ROOT <GNUSTO-GETENV "CONFUSION_MDL_DATA_ROOT">)
-     (MDLI <GNUSTO-GETENV "CONFUSION_MDL_MDLI">)
-     (EXPECT <GNUSTO-GETENV "CONFUSION_MDL_EXPECT">)
-     (PREFIX <GNUSTO-GETENV "CONFUSION_MDL_PREFIX">)
-     (TIMESTAMP <GNUSTO-GETENV "CONFUSION_MDL_TIMESTAMP">)
+    ((SHARE <GUNCHO-GETENV "CONFUSION_MDL_SHARE">)
+     (DATA-ROOT <GUNCHO-GETENV "CONFUSION_MDL_DATA_ROOT">)
+     (MDLI <GUNCHO-GETENV "CONFUSION_MDL_MDLI">)
+     (EXPECT <GUNCHO-GETENV "CONFUSION_MDL_EXPECT">)
+     (PREFIX <GUNCHO-GETENV "CONFUSION_MDL_PREFIX">)
+     (TIMESTAMP <GUNCHO-GETENV "CONFUSION_MDL_TIMESTAMP">)
      (SOURCE <>)
      (DATA <>)
      (BOOT <>)
-     (STATUS <>)
-     (SAVE-MODE <>))
+     (PLAYER-SAVE <>)
+     (STATUS <>))
 
-    ; Resolve the packaged game and writable user-data paths.
     <SET SOURCE
       <STRING .SHARE "/mdlzork_" .VERSION "/patched_confusion">>
 
     <SET DATA <STRING .DATA-ROOT "/" .VERSION>>
 
-    ; Determine the save mode.
-    <COND
-      ((==? .VERSION "771212")
-       <SET SAVE-MODE "interpreter">
-       <SET NEW-GAME T>)
-      ((==? .VERSION "780124")
-       <SET SAVE-MODE "interpreter">)
-      ((OR <==? .VERSION "791211">
-           <==? .VERSION "810722">)
-       <SET SAVE-MODE "game">)
-      (T
-       <ERROR "UNKNOWN-ZORK-VERSION" .VERSION>)>
-
-    ; Prepare the user-data tree and choose the boot image.
     <SET BOOT
       <ZORK-RUN-INIT
         .VERSION .SOURCE .DATA .NEW-GAME .TIMESTAMP>>
 
-    ; Run the game from its own directory.
-    <COND
-      (<NOT <GNUSTO-CHDIR .DATA>>
-       <ERROR "CANNOT-ENTER-ZORK-DIRECTORY" .DATA>)>
+    <SET PLAYER-SAVE
+      <STRING
+        .DATA
+        <COND
+          ((OR <==? .VERSION "771212">
+               <==? .VERSION "780124">)
+           "/SAVEFILE/ZORK.SAVE")
+          (T
+           "/MTRZORK/ZORK.SAVE")>>>
 
-    ; Later games need a game-level RESTORE command on Continue.
     <COND
-      ((AND <==? .SAVE-MODE "game">
-            <NOT .NEW-GAME>
-            <ZORK-RUN-EXISTS? "saves/current/ZORK.SAVE">)
-       <SET STATUS
-         <GNUSTO-EXECUTE
-           .EXPECT
-           <VECTOR
-             <STRING .PREFIX "/libexec/confusion-mdl/zork-restore.exp">
-             .MDLI
-             .BOOT>>>)
+      ((AND <NOT .NEW-GAME>
+            <NOT <ZORK-RUN-EXISTS? .PLAYER-SAVE>>)
+       <PRINC "No saved game exists for this version.">
+       <TERPRI>)
+
       (T
+       <COND
+         (<NOT <GUNCHO-CHDIR .DATA>>
+          <ERROR "CANNOT-ENTER-ZORK-DIRECTORY" .DATA>)>
+
        <SET STATUS
-         <GNUSTO-EXECUTE .MDLI <VECTOR "-r" .BOOT>>>)>
+         <COND
+           (.NEW-GAME
+            <GUNCHO-EXECUTE .MDLI
+              <VECTOR "-r" .BOOT>>)
 
-    ; Restore the menu process's original directory.
-    <COND
-      (<NOT <GNUSTO-CHDIR ,ZORK-MENU-ROOT>>
-       <ERROR "CANNOT-RETURN-TO-MENU-DIRECTORY">)>
+           ((OR <==? .VERSION "771212">
+                <==? .VERSION "780124">)
+            <GUNCHO-EXECUTE .MDLI
+              <VECTOR "-r" .PLAYER-SAVE>>)
 
-    ; Report the child process result.
-    <COND
-    ((==? .STATUS 0)
-    T)
-      (T
-       <PRINC "Zork exited with status ">
-       <PRINC .STATUS>
-       <TERPRI>)>>>
+           (T
+            <GUNCHO-EXECUTE .EXPECT
+              <VECTOR
+                <STRING .PREFIX
+                  "/libexec/confusion-mdl/zork-restore.exp">
+                .MDLI
+                .BOOT>>)>>
 
+       <COND
+         (<NOT <GUNCHO-CHDIR ,ZORK-MENU-ROOT>>
+          <ERROR "CANNOT-RETURN-TO-MENU-DIRECTORY">)>
+
+       <COND
+         ((==? .STATUS 0) T)
+         (T
+          <PRINC "Zork exited with status ">
+          <PRINC .STATUS>
+          <TERPRI>)>)>>>
 
 <DEFINE ZORK-MENU-START (VERSION)
   <PROG

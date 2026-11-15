@@ -11,12 +11,12 @@ call-error mechanism.
 
 ## Environment and process context
 
-- `<GNUSTO-GETENV "NAME">` returns the environment value as a STRING, or
+- `<GUNCHO-GETENV "NAME">` returns the environment value as a STRING, or
   `#FALSE ()` if the variable is unset.
-- `<GNUSTO-GETCWD>` returns the current working directory as a STRING.
-- `<GNUSTO-CHDIR "PATH">` changes the interpreter process's working directory;
+- `<GUNCHO-GETCWD>` returns the current working directory as a STRING.
+- `<GUNCHO-CHDIR "PATH">` changes the interpreter process's working directory;
   returns `T` on success.
-- `<GNUSTO-EXECUTE "PROGRAM" <VECTOR "ARG" ...>>` runs PROGRAM synchronously
+- `<GUNCHO-EXECUTE "PROGRAM" <VECTOR "ARG" ...>>` runs PROGRAM synchronously
   without invoking a shell. The vector contains arguments after `argv[0]`;
   the child inherits the current environment, working directory, and standard
   file descriptors. Returns the child's exit status, or `128 + signal` if it
@@ -25,16 +25,16 @@ call-error mechanism.
 
 ## Filesystem
 
-- `<GNUSTO-MKDIR "PATH" [MODE]>` creates one directory. MODE is an optional
+- `<GUNCHO-MKDIR "PATH" [MODE]>` creates one directory. MODE is an optional
   octal permission mask (default `0777`, subject to the process umask).
-- `<GNUSTO-MAKEDIRS "PATH" [MODE]>` creates missing parent directories with
+- `<GUNCHO-MAKEDIRS "PATH" [MODE]>` creates missing parent directories with
   the same MODE semantics; existing directories are accepted.
-- `<GNUSTO-UNLINK "PATH">` removes a file or symbolic link.
-- `<GNUSTO-SYMLINK "TARGET" "LINK">` creates a symbolic link.
-- `<GNUSTO-CHMOD "PATH" MODE>` changes permission bits; MODE is an octal FIX.
-- `<GNUSTO-STAT "PATH">` returns a ten-element VECTOR:
+- `<GUNCHO-UNLINK "PATH">` removes a file or symbolic link.
+- `<GUNCHO-SYMLINK "TARGET" "LINK">` creates a symbolic link.
+- `<GUNCHO-CHMOD "PATH" MODE>` changes permission bits; MODE is an octal FIX.
+- `<GUNCHO-STAT "PATH">` returns a ten-element VECTOR:
   `#[MODE SIZE UID GID ATIME MTIME CTIME DEV INO NLINK]`.
-- `<GNUSTO-DIRECTORY-LIST "PATH">` returns a LIST of entry-name STRINGs,
+- `<GUNCHO-DIRECTORY-LIST "PATH">` returns a LIST of entry-name STRINGs,
   sorted lexicographically and excluding `.` and `..`.
 
 Historical MDL facilities such as `RENAME`, `FILECOPY`, `OPEN`, and

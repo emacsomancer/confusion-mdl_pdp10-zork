@@ -1,6 +1,6 @@
 
-<SETG MDLI <GNUSTO-GETENV "mdli">>
-<SETG ROOT <GNUSTO-GETCWD>>
+<SETG MDLI <GUNCHO-GETENV "mdli">>
+<SETG ROOT <GUNCHO-GETCWD>>
 <SETG NL <ASCII 10>>
 
 <DEFINE CHECK (RESULT OPERATION)
@@ -27,26 +27,26 @@
   <PRINC .DIR>
   <PRINC ,NL>
 
-  <CHECK <GNUSTO-CHDIR .DIR> "chdir">
-  <CHECK <GNUSTO-CHMOD "MDL/MADADV.SAVE" 420> "chmod writable">
+  <CHECK <GUNCHO-CHDIR .DIR> "chdir">
+  <CHECK <GUNCHO-CHMOD "MDL/MADADV.SAVE" 420> "chmod writable">
 
   <RUN-CHECK
-    <GNUSTO-EXECUTE
+    <GUNCHO-EXECUTE
       ,MDLI
       []
       <STRING "<FLOAD " <ASCII 34> "run.mud" <ASCII 34> ">" ,NL>>
     "image rebuild">
 
-  <CHECK <GNUSTO-CHMOD "MDL/MADADV.SAVE" 292> "chmod read-only">
+  <CHECK <GUNCHO-CHMOD "MDL/MADADV.SAVE" 292> "chmod read-only">
 
   <RUN-CHECK
-    <GNUSTO-EXECUTE
+    <GUNCHO-EXECUTE
       ,MDLI
       ["-r" "MDL/MADADV.SAVE"]
       "">
     "image restore test">
 
-  <CHECK <GNUSTO-CHDIR ,ROOT> "return to repository root">
+  <CHECK <GUNCHO-CHDIR ,ROOT> "return to repository root">
 
   <PRINC "Verified ">
   <PRINC .DIR>

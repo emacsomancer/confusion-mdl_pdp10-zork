@@ -3,7 +3,7 @@
 set timeout 60
 
 if {$argc != 2} {
-    send_user "Usage: zorkrestore.exp MDLI BOOT_FILE\n"
+    send_user "Usage: zork-restore.exp MDLI BOOT_FILE\n"
     exit 2
 }
 
