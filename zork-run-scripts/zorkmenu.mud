@@ -1,13 +1,13 @@
 <FLOAD
   <STRING
-    <GUNCHO-GETENV "CONFUSION_MDL_SHARE">
+    <GIRGOL-GETENV "CONFUSION_MDL_SHARE">
     "/zorkrun.mud">>
 
-<SETG ZORK-MENU-ROOT <GUNCHO-GETCWD>>
+<SETG ZORK-MENU-ROOT <GIRGOL-GETCWD>>
 
 <DEFINE ZORK-MENU-DUNGEON ()
   <PROG
-    ((PREFIX <GUNCHO-GETENV "CONFUSION_MDL_PREFIX">)
+    ((PREFIX <GIRGOL-GETENV "CONFUSION_MDL_PREFIX">)
      (RUNNER <>)
      (STATUS <>))
 
@@ -17,7 +17,7 @@
         "/libexec/confusion-mdl/dungeon-3.2b-run">>
 
     <SET STATUS
-      <GUNCHO-EXECUTE
+      <GIRGOL-EXECUTE
         "sh"
         <VECTOR .RUNNER>>>
 
@@ -50,12 +50,12 @@
 
 <DEFINE ZORK-MENU-RUN (VERSION NEW-GAME)
   <PROG
-    ((SHARE <GUNCHO-GETENV "CONFUSION_MDL_SHARE">)
-     (DATA-ROOT <GUNCHO-GETENV "CONFUSION_MDL_DATA_ROOT">)
-     (MDLI <GUNCHO-GETENV "CONFUSION_MDL_MDLI">)
-     (EXPECT <GUNCHO-GETENV "CONFUSION_MDL_EXPECT">)
-     (PREFIX <GUNCHO-GETENV "CONFUSION_MDL_PREFIX">)
-     (TIMESTAMP <GUNCHO-GETENV "CONFUSION_MDL_TIMESTAMP">)
+    ((SHARE <GIRGOL-GETENV "CONFUSION_MDL_SHARE">)
+     (DATA-ROOT <GIRGOL-GETENV "CONFUSION_MDL_DATA_ROOT">)
+     (MDLI <GIRGOL-GETENV "CONFUSION_MDL_MDLI">)
+     (EXPECT <GIRGOL-GETENV "CONFUSION_MDL_EXPECT">)
+     (PREFIX <GIRGOL-GETENV "CONFUSION_MDL_PREFIX">)
+     (TIMESTAMP <GIRGOL-GETENV "CONFUSION_MDL_TIMESTAMP">)
      (SOURCE <>)
      (DATA <>)
      (BOOT <>)
@@ -89,22 +89,22 @@
 
       (T
        <COND
-         (<NOT <GUNCHO-CHDIR .DATA>>
+         (<NOT <GIRGOL-CHDIR .DATA>>
           <ERROR "CANNOT-ENTER-ZORK-DIRECTORY" .DATA>)>
 
        <SET STATUS
          <COND
            (.NEW-GAME
-            <GUNCHO-EXECUTE .MDLI
+            <GIRGOL-EXECUTE .MDLI
               <VECTOR "-r" .BOOT>>)
 
            ((OR <==? .VERSION "771212">
                 <==? .VERSION "780124">)
-            <GUNCHO-EXECUTE .MDLI
+            <GIRGOL-EXECUTE .MDLI
               <VECTOR "-r" .PLAYER-SAVE>>)
 
            (T
-            <GUNCHO-EXECUTE .EXPECT
+            <GIRGOL-EXECUTE .EXPECT
               <VECTOR
                 <STRING .PREFIX
                   "/libexec/confusion-mdl/zork-restore.exp">
@@ -112,7 +112,7 @@
                 .BOOT>>)>>
 
        <COND
-         (<NOT <GUNCHO-CHDIR ,ZORK-MENU-ROOT>>
+         (<NOT <GIRGOL-CHDIR ,ZORK-MENU-ROOT>>
           <ERROR "CANNOT-RETURN-TO-MENU-DIRECTORY">)>
 
        <COND

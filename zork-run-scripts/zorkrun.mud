@@ -15,26 +15,26 @@
 
 <DEFINE ZORK-RUN-EXISTS? (PATH)
   <COND
-    (<GUNCHO-STAT .PATH> T)
+    (<GIRGOL-STAT .PATH> T)
     (T #FALSE ())>>
 
 
 <DEFINE ZORK-RUN-COPY (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
-    <GUNCHO-EXECUTE "cp"
+    <GIRGOL-EXECUTE "cp"
       <VECTOR "--no-preserve=mode" "--" .SOURCE .DESTINATION>>
     "cp">>
 
 <DEFINE ZORK-RUN-COPY-TREE (SOURCE DESTINATION)
   <ZORK-RUN-CHECK
-    <GUNCHO-EXECUTE "cp"
+    <GIRGOL-EXECUTE "cp"
       <VECTOR "-R" "--no-preserve=mode" "--"
         <STRING .SOURCE "/."> .DESTINATION>>
         "cp -R">>
         
 <DEFINE ZORK-RUN-MKDIRS (PATH)
   <ZORK-RUN-REQUIRE
-    <GUNCHO-MAKEDIRS .PATH>
+    <GIRGOL-MAKEDIRS .PATH>
     "mkdir -p">>
 
 
@@ -106,7 +106,7 @@
        <COND
          ((ZORK-RUN-EXISTS? .CURRENT)
           <ZORK-RUN-REQUIRE
-            <GUNCHO-UNLINK .CURRENT>
+            <GIRGOL-UNLINK .CURRENT>
             "remove previous player save">)>)
       (T T)>
 

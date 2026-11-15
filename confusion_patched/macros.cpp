@@ -8239,7 +8239,7 @@ static bool mdl_gnusto_path(mdl_value_t *arg, std::string &path)
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_getenv(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-GETENV */
+/* SUBR GIRGOL-GETENV */
 {
     ARGSETUP(args);
     mdl_value_t *name;
@@ -8254,7 +8254,7 @@ mdl_value_t *mdl_builtin_eval_gnusto_getenv(mdl_value_t *form, mdl_value_t *args
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_getcwd(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-GETCWD */
+/* SUBR GIRGOL-GETCWD */
 {
     DENYARG(0, args);
 #ifndef _WIN32
@@ -8266,12 +8266,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_getcwd(mdl_value_t *form, mdl_value_t *args
     }
     return mdl_new_string(&buffer[0]);
 #else
-    return mdl_call_error("GUNCHO-GETCWD-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-GETCWD-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_chdir(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-CHDIR */
+/* SUBR GIRGOL-CHDIR */
 {
     ARGSETUP(args);
     mdl_value_t *arg;
@@ -8283,12 +8283,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_chdir(mdl_value_t *form, mdl_value_t *args)
     if (chdir(path.c_str()) == 0) return mdl_value_T;
     return mdl_gnusto_errno_result(errno);
 #else
-    return mdl_call_error("GUNCHO-CHDIR-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-CHDIR-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_mkdir(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-MKDIR */
+/* SUBR GIRGOL-MKDIR */
 {
     ARGSETUP(args);
     mdl_value_t *arg, *modearg;
@@ -8307,12 +8307,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_mkdir(mdl_value_t *form, mdl_value_t *args)
     if (mkdir(path.c_str(), mode) == 0) return mdl_value_T;
     return mdl_gnusto_errno_result(errno);
 #else
-    return mdl_call_error("GUNCHO-MKDIR-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-MKDIR-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_makedirs(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-MAKEDIRS */
+/* SUBR GIRGOL-MAKEDIRS */
 {
     ARGSETUP(args);
     mdl_value_t *arg, *modearg;
@@ -8391,12 +8391,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_makedirs(mdl_value_t *form, mdl_value_t *ar
 
     return mdl_value_T;
 #else
-    return mdl_call_error("GUNCHO-MAKEDIRS-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-MAKEDIRS-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_unlink(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-UNLINK */
+/* SUBR GIRGOL-UNLINK */
 {
     ARGSETUP(args);
     mdl_value_t *arg;
@@ -8408,12 +8408,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_unlink(mdl_value_t *form, mdl_value_t *args
     if (unlink(path.c_str()) == 0) return mdl_value_T;
     return mdl_gnusto_errno_result(errno);
 #else
-    return mdl_call_error("GUNCHO-UNLINK-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-UNLINK-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_symlink(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-SYMLINK */
+/* SUBR GIRGOL-SYMLINK */
 {
     ARGSETUP(args);
     mdl_value_t *targetarg, *linkarg;
@@ -8427,12 +8427,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_symlink(mdl_value_t *form, mdl_value_t *arg
     if (symlink(target.c_str(), linkpath.c_str()) == 0) return mdl_value_T;
     return mdl_gnusto_errno_result(errno);
 #else
-    return mdl_call_error("GUNCHO-SYMLINK-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-SYMLINK-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_chmod(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-CHMOD */
+/* SUBR GIRGOL-CHMOD */
 {
     ARGSETUP(args);
     mdl_value_t *patharg, *modearg;
@@ -8447,12 +8447,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_chmod(mdl_value_t *form, mdl_value_t *args)
     if (chmod(path.c_str(), (mode_t)modearg->v.w) == 0) return mdl_value_T;
     return mdl_gnusto_errno_result(errno);
 #else
-    return mdl_call_error("GUNCHO-CHMOD-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-CHMOD-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_stat(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-STAT */
+/* SUBR GIRGOL-STAT */
 {
     ARGSETUP(args);
     mdl_value_t *patharg;
@@ -8478,12 +8478,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_stat(mdl_value_t *form, mdl_value_t *args)
     v[9] = *mdl_new_fix((MDL_INT)st.st_nlink);
     return result;
 #else
-    return mdl_call_error("GUNCHO-STAT-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-STAT-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_directory_list(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-DIRECTORY-LIST */
+/* SUBR GIRGOL-DIRECTORY-LIST */
 {
     ARGSETUP(args);
     mdl_value_t *patharg;
@@ -8518,12 +8518,12 @@ mdl_value_t *mdl_builtin_eval_gnusto_directory_list(mdl_value_t *form, mdl_value
     }
     return mdl_make_list(reversed, MDL_TYPE_LIST);
 #else
-    return mdl_call_error("GUNCHO-DIRECTORY-LIST-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-DIRECTORY-LIST-UNSUPPORTED", NULL);
 #endif
 }
 
 mdl_value_t *mdl_builtin_eval_gnusto_execute(mdl_value_t *form, mdl_value_t *args)
-/* SUBR GUNCHO-EXECUTE */
+/* SUBR GIRGOL-EXECUTE */
 {
     ARGSETUP(args);
     mdl_value_t *programarg, *argvarg, *inputarg;
@@ -8682,7 +8682,7 @@ int argc = VLENGTH(argvarg);
 
     return mdl_new_fix(1);
 #else
-    return mdl_call_error("GUNCHO-EXECUTE-UNSUPPORTED", NULL);
+    return mdl_call_error("GIRGOL-EXECUTE-UNSUPPORTED", NULL);
 #endif
 }
 
