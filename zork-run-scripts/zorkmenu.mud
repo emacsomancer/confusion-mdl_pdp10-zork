@@ -34,15 +34,15 @@
   <PRINC "Confusion MDL — Zork">
   <TERPRI>
   <TERPRI>
-  <PRINC "  1. Zork 1977-12-12 (500 points)">
+  <PRINC "  1. Zork 1977-12-12 (500 points; no end-game)">
   <TERPRI>
-  <PRINC "  2. Zork 1978-01-24">
+  <PRINC "  2. Zork 1978-01-24 (=1977+parser improvements & end-game)">
   <TERPRI>
   <PRINC "  3. Zork 1979-12-11 (616 points)">
   <TERPRI>
-  <PRINC "  4. Zork 1981-07-22">
+  <PRINC "  4. Zork 1981-07-22 (=1979+3 bugfixes & new US N&D report)">
   <TERPRI>
-  <PRINC "  5. Dungeon 3.2b 1990 [Fortran]">
+  <PRINC "  5. Dungeon 3.2b 1990 [Fortran; similar to 1981 MDL]">
   <TERPRI>
   <PRINC "  Q. Quit">
   <TERPRI>

@@ -49,8 +49,6 @@
         <ERROR "MISSING-ARCHIVE-TIMESTAMP" .CURRENT>)>)
     (T T)>>
 
-
-
 <DEFINE ZORK-RUN-INIT (VERSION SOURCE DATA NEW-GAME TIMESTAMP)
   <PROG
     ((SEED <>)
@@ -68,19 +66,19 @@
       (T
        <ERROR "UNKNOWN-ZORK-VERSION" .VERSION>)>
 
-    ; Copy the packaged game tree on first use.
+    ; "Copy the packaged game tree on first use."
     <ZORK-RUN-MKDIRS .DATA>
 
     <COND
       ((NOT <ZORK-RUN-EXISTS? <STRING .DATA "/run.mud">>)
        <ZORK-RUN-COPY-TREE .SOURCE .DATA>)>
 
-    ; Every release uses its rebuilt interpreter image.
+    ; "Every release uses its rebuilt interpreter image."
     <SET SEED <STRING .DATA "/MDL/MADADV.SAVE">>
     <SET INITIAL <STRING .DATA "/saves/initial/MADADV.SAVE">>
     <SET HISTORY <STRING .DATA "/saves/history">>
 
-    ; Keep each release's historical player-save location.
+    ; "Keep each release's historical player-save location."
     <COND
       ((OR <==? .VERSION "771212">
            <==? .VERSION "780124">)
@@ -94,12 +92,12 @@
     <ZORK-RUN-MKDIRS .HISTORY>
     <ZORK-RUN-MKDIRS .SAVE-DIR>
 
-    ; Keep a private copy of the initialized interpreter image.
+    ; "Keep a private copy of the initialized interpreter image."
     <COND
       ((NOT <ZORK-RUN-EXISTS? .INITIAL>)
        <ZORK-RUN-COPY .SEED .INITIAL>)>
 
-    ; Archive the previous player save before starting a new game.
+    ; "Archive the previous player save before starting a new game."
     <COND
       (.NEW-GAME
        <ZORK-RUN-ARCHIVE .CURRENT .HISTORY .TIMESTAMP>
